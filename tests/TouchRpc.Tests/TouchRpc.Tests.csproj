@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TouchRpc.Core\TouchRpc.Core.csproj" />
+    <ProjectReference Include="..\..\src\TouchRpc.Infrastructure\TouchRpc.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

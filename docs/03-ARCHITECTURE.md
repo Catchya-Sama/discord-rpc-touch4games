@@ -10,7 +10,7 @@ Struktur yang dituju (boleh sederhanakan jumlah project sesuai fase):
 - tests/TouchRpc.Tests: synthetic fixtures, replay dan unit tests bermakna.
 - docs: spesifikasi dan progres.
 
-Struktur aktual P1 menyederhanakan target tersebut menjadi `TouchRpc.Core`, `TouchRpc.Replay`, dan `TouchRpc.Tests`. Infrastructure dan App belum dibuat karena live reader, Windows UI dan Discord berada pada fase berikutnya. Core tidak memiliki package runtime pihak ketiga. Test menggunakan MSTest 4.0.2 dari template SDK .NET 10.
+Struktur aktual P2 terdiri dari `TouchRpc.Core`, `TouchRpc.Infrastructure`, `TouchRpc.Replay`, `TouchRpc.App`, dan `TouchRpc.Tests`. Core dan Infrastructure tidak memiliki package runtime pihak ketiga. App menggunakan WPF bawaan Windows/.NET. Test menggunakan MSTest 4.0.2 dari template SDK .NET 10.
 
 Replay menerima path file, character role ID manual opsional, dan kalibrasi role opsional. Output dibatasi ke presence final, phase, role/evidence, roster completeness dan diagnostic code; raw line dan daftar ID tidak dicetak.
 
@@ -22,6 +22,14 @@ State: clientSession, roomSession/internalRoomId, phase (unknown/lobby/waiting/l
 Read-only, FileShare.ReadWrite | FileShare.Delete sesuai platform. Initial replay membangun state tanpa mem-publish semua history ke Discord; publish hanya keadaan akhir yang konsisten. Tail berdasarkan byte offset dengan decoder incremental, buffer baris parsial, CRLF/UTF-8. Jangan baca ulang seluruh log tiap poll.
 Tangani truncation, replacement walau file baru berukuran lebih besar, rename, file missing sementara, process exit/restart, partial writes, Unicode, file panjang dan cancel/dispose.
 Pisahkan event time, read time, monotonic runtime. Jangan mengasumsikan korelasi waktu internal selalu sempurna.
+
+Implementasi P2 membuka file dengan `FileShare.ReadWrite | FileShare.Delete`, menyimpan byte offset, memakai decoder UTF-8 incremental dan menahan baris parsial sampai newline lengkap. File identity Windows memakai volume serial + file index; fallback non-Windows memakai creation time. Pergantian identity atau panjang file yang lebih kecil memulai session baru dan mengganti reducer agar state lama tidak terbawa.
+
+Initial replay diproses sebagai satu batch dan preview hanya menerima snapshot state akhir. Poll berikutnya hanya membaca byte baru. Missing/unreadable/valid-waiting/receiving/game-closed merupakan source health terpisah dari status Discord.
+
+Process detector mencari `TouchClient.exe`, lalu membentuk path relatif `TouchClient_Data/output_log.txt` dari executable directory. Jika process path ditolak OS atau terdapat beberapa client, UI tidak menebak: pengguna memilih proses secara eksplisit atau memakai Browse. Settings path/role disimpan sebagai JSON di LocalAppData dengan write atomik.
+
+Monitoring yang dimulai dari process selection mengikuti lifecycle proses. Saat PID keluar, preview dibersihkan menjadi GameClosed tetapi loop tetap menunggu. Satu instance baru dapat dihubungkan kembali sebagai session baru; beberapa instance tetap membutuhkan pilihan eksplisit dan tidak dicampur.
 
 ## Roster
 Snapshot entry mengganti daftar, bukan menggabungkan anggota room lama. Gunakan batas snapshot terverifikasi dari fixture; pending RoomEnter tidak dianggap sukses sampai balasan.

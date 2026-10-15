@@ -1,6 +1,6 @@
 # TOUCH RPC
-Tanggal keputusan: 15 Oktober 2026. Repository ini berada pada fase P1:
-Core parser dan console replay offline sudah tersedia untuk fixture sintetis.
+Tanggal keputusan: 15 Oktober 2026. Implementasi lokal P2 tersedia:
+Core parser, live log reader, path detection/fallback Browse, settings lokal, dan preview Windows. Verifikasi live dengan game masih pending.
 
 Project Owner: Bongbong (xooty).
 Target: Software pendamping Windows, C# .NET, sumber data log local file TOUCH, keluaran Discord Rich Presence.
@@ -28,11 +28,18 @@ AGENTS.md → docs/01-SPEC.md → docs/02-LOG-EVIDENCE.md → docs/03-ARCHITECTU
 ## Toolchain
 Project menargetkan .NET 10 LTS dan dikunci ke SDK 10.0.402 melalui `global.json`.
 
-## Build dan test P1
+## Build dan test
 ```powershell
 dotnet restore TouchRpc.slnx
 dotnet build TouchRpc.slnx -c Release --no-restore
 dotnet test TouchRpc.slnx -c Release --no-build
+```
+
+Pada mesin bootstrap ini SDK 10.0.402 dipasang user-local tanpa mengubah PATH. Jika `dotnet --version` tidak menemukan SDK dari `global.json`, gunakan:
+```powershell
+$dotnet = "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe"
+& $dotnet build TouchRpc.slnx -c Release
+& $dotnet test TouchRpc.slnx -c Release --no-build
 ```
 
 Replay fixture sintetis:
@@ -44,6 +51,22 @@ dotnet run --project src/TouchRpc.Replay -c Release -- `
 
 Console hanya menampilkan state akhir dan diagnostik terpilih. Console tidak mencetak raw line, chat, nama anggota, atau daftar role ID. Parameter `--role joined|spectator` dapat dipakai untuk kalibrasi eksplisit saat bukti role dari log tidak lengkap.
 
-P1 masih offline. Live log reader, path detection, UI, AFK, tray dan Discord belum dibuat.
+Console replay P1 tetap tersedia untuk diagnosis offline. P2 menambahkan monitoring live dan preview Windows; AFK, tray dan Discord belum dibuat.
+
+## Menjalankan preview Windows P2
+```powershell
+& "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" run --project src/TouchRpc.App -c Release
+```
+
+Alur penggunaan:
+1. Klik **Detect**. Jika path proses dapat dibaca, aplikasi membentuk path `TouchClient_Data/output_log.txt` dari folder executable.
+2. Jika process path tidak tersedia atau lokasi berbeda, klik **Browse** dan pilih `output_log.txt` secara eksplisit.
+3. Isi Character Role ID hanya bila diperlukan; launcher userid bukan character roleid. Biarkan kosong jika belum diketahui.
+4. Gunakan role calibration hanya jika bukti role dari log tidak lengkap.
+5. Klik **Start monitoring** dan periksa Source Health serta Presence Preview.
+
+Settings disimpan di `%LocalAppData%\TouchRpc\settings.json`, bukan di repository atau folder game. Raw log hanya dibaca dan tidak disalin.
+
+P2 belum mencakup AFK, tray atau Discord. Status Discord di preview sengaja tetap `Disabled (P4)`.
 
 Yayyy itu step awal nya gengggg. kalo bisa yaudah

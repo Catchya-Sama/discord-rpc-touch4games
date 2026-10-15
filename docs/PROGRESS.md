@@ -8,7 +8,7 @@
 - Path detection dan role ID otomatis belum diuji untuk pengguna lain.
 
 ## Fase aktif berikutnya
-P1: Core parser dan offline replay sedang dilaksanakan setelah P0 diterima pemilik. Jangan mulai P2 sebelum hasil P1 direview.
+P2: live log, path detection dan preview Windows sudah diimplementasikan secara lokal; live game verification masih pending. Jangan mulai P3 sebelum hasil P2 direview.
 
 ## 15 Oktober 2026 / P0 / main
 Perubahan:
@@ -69,6 +69,40 @@ Risiko atau unknown:
 Push status: dicatat pada laporan fase setelah commit/push.
 
 Langkah berikutnya: review P1. Jika diterima, rencanakan P2 live reader, path detection dan preview Windows sebagai fase terpisah.
+
+## 15 Oktober 2026 / P2 / main
+Perubahan:
+- Ditambahkan Infrastructure untuk initial replay + incremental tail, source health, process detection, path validation, settings LocalAppData dan monitoring coordinator.
+- Ditambahkan WPF preview dengan Detect, pemilihan proses eksplisit, Browse, Character Role ID manual, role calibration, Start/Stop, source health dan presence diagnostics.
+- Monitoring process-bound membersihkan preview saat game tutup dan menunggu satu TouchClient baru untuk reconnect sebagai session baru.
+- Reader menangani UTF-8/CRLF parsial, byte offset, truncate, replacement, missing/unreadable file dan cancellation tanpa menulis ke file TOUCH.
+- Ditambahkan integration tests berbasis file sementara; tidak ada raw log pengguna yang masuk Git.
+
+Keputusan + alasan:
+- File identity Windows memakai handle metadata agar replacement dapat dikenali walau file baru lebih besar. Truncate juga memulai session baru.
+- Reducer diganti pada session file baru supaya roster/role lama tidak terbawa. Initial history hanya menghasilkan snapshot akhir untuk preview.
+- Jika executable path tidak dapat dibaca atau ada beberapa client, aplikasi tidak memilih secara diam-diam; fallback adalah pilihan proses atau Browse.
+- UI memisahkan source health dari Discord status. Discord tetap disabled karena adapter baru masuk P4.
+- Settings disimpan di LocalAppData, bukan repository/folder game. Path instalasi dan role ID tidak memiliki default pribadi.
+
+Pemeriksaan dijalankan dan hasil:
+- `dotnet format --verify-no-changes` lulus.
+- Release build untuk Core, Infrastructure, Replay, WPF App dan Tests berhasil dengan warnings-as-errors.
+- Automated tests: 35 passed, 0 failed, 0 skipped.
+- Smoke launch `TouchRpc.App.exe`: proses tetap hidup selama 3 detik dan ditutup otomatis tanpa crash.
+- TouchClient terdeteksi berjalan, tetapi executable path tidak tersedia pada sesi pemeriksaan; fallback Browse tetap diperlukan untuk live test ini.
+
+Live verification: pending — lobby/room/play/spec/count dan instalasi alternatif belum dikonfirmasi pada UI oleh pengguna.
+
+Risiko atau unknown:
+- Marker snapshot dan variasi format live tetap heuristic berdasarkan bukti yang tersedia.
+- Process path dapat ditolak OS; Browse merupakan fallback resmi, bukan error palsu.
+- Monitoring manual tanpa process selection tidak dapat memastikan game closed dari process lifecycle dan bergantung pada source health file.
+- AFK, Discord, tray dan packaging belum diimplementasikan.
+
+Push status: dicatat pada laporan fase setelah commit/push.
+
+Langkah berikutnya: pengguna menjalankan protokol live P2 dan mengirim diagnostics teredaksi. P3 AFK tidak dimulai sampai review P2.
 
 ## Format update fase
 Tanggal / fase / branch:

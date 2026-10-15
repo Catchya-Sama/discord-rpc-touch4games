@@ -1,0 +1,111 @@
+﻿<Window x:Class="TouchRpc.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="TOUCH RPC Preview"
+        Width="920" Height="700" MinWidth="760" MinHeight="620"
+        Background="{StaticResource WindowBackground}"
+        Loaded="Window_Loaded" Closing="Window_Closing">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                <TextBlock Text="TOUCH RPC" FontSize="28" FontWeight="Bold" />
+                <TextBlock Text="P2 live log preview · Discord remains disabled" Foreground="#FF5F6470" />
+            </StackPanel>
+
+            <Border Grid.Row="1" Background="{StaticResource CardBackground}" CornerRadius="12" Padding="20" Margin="0,0,0,16">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Log source" FontSize="18" FontWeight="SemiBold" />
+                        <TextBlock Text="TouchClient process" Margin="0,12,0,0" />
+                        <ComboBox ItemsSource="{Binding ProcessCandidates}"
+                                  SelectedItem="{Binding SelectedProcess}"
+                                  DisplayMemberPath="DisplayName" />
+                        <TextBlock Text="output_log.txt" />
+                        <TextBox Text="{Binding LogPath, UpdateSourceTrigger=PropertyChanged}" />
+                        <WrapPanel>
+                            <Button Content="Detect" Click="Detect_Click" />
+                            <Button Content="Browse" Click="Browse_Click" />
+                        </WrapPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Bottom" Margin="20,0,0,0">
+                        <Button Content="Start monitoring" Click="Start_Click" IsEnabled="{Binding CanStart}" />
+                        <Button Content="Stop" Click="Stop_Click" IsEnabled="{Binding CanStop}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="2" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="{StaticResource CardBackground}" CornerRadius="12" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Local character" FontSize="18" FontWeight="SemiBold" />
+                        <TextBlock Text="Character Role ID (optional)" Margin="0,12,0,0" />
+                        <TextBox Text="{Binding LocalRoleId, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="Do not enter launcher userid. Digits only." Foreground="#FF7A4D00" />
+                        <TextBlock Text="Role calibration" Margin="0,12,0,0" />
+                        <ComboBox ItemsSource="{Binding ConfigurableRoles}" SelectedItem="{Binding ConfiguredRole}" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Background="{StaticResource CardBackground}" CornerRadius="12" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Connection health" FontSize="18" FontWeight="SemiBold" />
+                        <TextBlock Text="Log source" Margin="0,12,0,0" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding SourceHealth}" Foreground="{StaticResource PrimaryBrush}" />
+                        <TextBlock Text="{Binding SourceDiagnostic}" TextWrapping="Wrap" Margin="0,4,0,12" />
+                        <TextBlock Text="Discord" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding DiscordStatus}" Foreground="#FF777777" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="3" Background="{StaticResource CardBackground}" CornerRadius="12" Padding="20">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.2*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Presence preview" FontSize="18" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding Details}" FontSize="24" FontWeight="Bold" Margin="0,18,0,4" />
+                        <TextBlock Text="{Binding State}" FontSize="18" Foreground="{StaticResource PrimaryBrush}" />
+                    </StackPanel>
+                    <Grid Grid.Column="1" Margin="24,0,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Phase" FontWeight="SemiBold" Margin="0,4,16,4" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Phase}" Margin="0,4" />
+                        <TextBlock Grid.Row="1" Text="Role" FontWeight="SemiBold" Margin="0,4,16,4" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding RoleEvidence}" Margin="0,4" />
+                        <TextBlock Grid.Row="2" Text="Roster" FontWeight="SemiBold" Margin="0,4,16,4" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Roster}" Margin="0,4" />
+                        <TextBlock Grid.Row="3" Text="Diagnostic" FontWeight="SemiBold" Margin="0,4,16,4" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Diagnostic}" Margin="0,4" />
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</Window>

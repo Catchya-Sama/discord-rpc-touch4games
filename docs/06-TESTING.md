@@ -44,3 +44,30 @@ dotnet test TouchRpc.slnx -c Release --no-build
 Fixture yang boleh masuk Git harus berada di `tests/TouchRpc.Tests/Fixtures` dan berakhiran `.synthetic.log`. Semua ID dan urutan di fixture tersebut sintetis. Aturan umum `*.log` tetap mengabaikan log lain.
 
 P1 menguji parser pola terdokumentasi, pending entry, midgame spectator, role switch yang dikonfirmasi, duplikasi roster, remote/local leave, fallback unknown, singular/plural dan replay deterministik. Hasil fixture tidak dianggap live verification terhadap game.
+
+## Pemeriksaan P2
+Automated integration tests memakai file sementara dan menguji:
+- initial replay lalu append dibaca exactly once;
+- partial CRLF dan UTF-8 multibyte tidak diproses sebelum lengkap;
+- truncate memulai session baru dan membuang partial/state lama;
+- replacement dideteksi walaupun file baru lebih besar;
+- missing file menjadi source health, bukan exception keluar;
+- cancellation token menghentikan read secara kooperatif;
+- file biner ditolak, sedangkan text log kosong valid sebagai waiting;
+- settings LocalAppData round-trip dan role ID invalid dibuang;
+- path log diturunkan dari executable directory tanpa konstanta instalasi;
+- game closed membersihkan monitoring snapshot.
+
+Smoke test lokal: build Release, jalankan `TouchRpc.App.exe`, pastikan proses tetap hidup setidaknya beberapa detik, lalu tutup. Ini hanya membuktikan startup WPF, bukan live game acceptance.
+
+### Protokol live P2 pengguna
+1. Jalankan `dotnet run --project src/TouchRpc.App -c Release` (atau executable SDK user-local seperti di README).
+2. Dengan TOUCH di lobby, pilih/deteksi log dan Start; expected `In Lobby` dengan State kosong.
+3. Masuk room normal; expected count semua anggota termasuk spectator dan State `Waiting` setelah entry lengkap.
+4. Mulai bermain sebagai Joined; expected `Smashing Key`.
+5. Masuk atau switch Spectator; expected `Spectating`, termasuk saat gameplay/results/kembali waiting.
+6. Keluar dari TOUCH; bila proses dipilih, expected source `GameClosed` dan preview state dibersihkan.
+7. Buka kembali TOUCH; jika hanya satu client, expected monitoring reconnect sebagai session baru. Jika beberapa client, pilih eksplisit.
+8. Ulangi dengan instalasi non-default atau Browse. Jangan kirim raw log; kirim teks health/phase/role evidence/roster/diagnostic saja.
+
+Live hasil di atas tetap pending sampai dikonfirmasi pengguna pada game sebenarnya.
