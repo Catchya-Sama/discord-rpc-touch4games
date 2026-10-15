@@ -1,0 +1,33 @@
+# Build/IDE
+**/bin/
+**/obj/
+.vs/
+.vscode/
+TestResults/
+artifacts/
+coverage/
+*.trx
+*.user
+*.suo
+
+# Raw logs, dumps and local/private configuration
+output_log*.txt
+*.log
+*.dmp
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+settings.local.json
+secrets.json
+private/
+raw-logs/
+
+# Packaging outputs
+*.msi
+*.exe
+*.zip
+*.nupkg
+*.snupkg
