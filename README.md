@@ -1,41 +1,70 @@
 # TOUCH RPC
-Tanggal keputusan: 15 Oktober 2026. Implementasi lokal P4 tersedia:
-Core parser, live log reader, path detection/fallback Browse, lifecycle AFK monotonic, settings lokal, preview Windows dan Discord Rich Presence adapter. Verifikasi live Discord masih pending Application ID/aset proyek.
 
-Project Owner: Bongbong (xooty).
-Target: Software pendamping Windows, C# .NET, sumber data log local file TOUCH, keluaran Discord Rich Presence.
+Pendamping Windows untuk membaca `TouchClient_Data/output_log.txt` secara lokal dan menampilkan status game sebagai Discord Rich Presence. Aplikasi tidak mengubah file TOUCH, tidak mengunggah log, dan tidak memerlukan token Discord.
+
+Project owner: repository maintainer.
 
 ## Scope rilis pertama
+
 - Lobby: `In Lobby`.
 - Room menunggu: jumlah semua anggota room, termasuk spectator, dengan state `Waiting`.
-- Peserta bermain: state `Smashing Key` hanya jika role lokal Joined terverifikasi.
-- Spectator: state `Spectating`, termasuk selama gameplay dan setelah hasil sampai role berubah secara sah.
-- AFK: 30 menit berada di room tanpa mulai bermain sebagai peserta; aktivitas lain bukan reset.
-- Jika role atau roster belum dapat dipastikan, tampilkan unknown/fallback dan jangan mengarang count atau state.
+- Peserta bermain: `Smashing Key` hanya jika role lokal Joined terverifikasi.
+- Spectator: `Spectating`, termasuk selama gameplay dan setelah hasil sampai role berubah secara sah.
+- AFK: 30 menit berada di room tanpa mulai bermain sebagai peserta.
+- Unknown fallback jika role atau roster belum dapat dipastikan; aplikasi tidak mengarang count atau state.
+- Notification-area tray, preview lokal, dan Discord Rich Presence opsional.
 
-Mode permainan, musik, nomor room dan kapasitas slot berada di luar scope rilis ini.
+Mode permainan, musik, difficulty, nomor room, kapasitas slot, overlay, akun online, dan backend berada di luar scope.
 
+## Menjalankan paket portable
 
-## Step Progress nya
-AGENTS.md → docs/01-SPEC.md → docs/02-LOG-EVIDENCE.md → docs/03-ARCHITECTURE.md → docs/04-PHASES.md → docs/05-GITHUB.md → docs/06-TESTING.md → docs/PROGRESS.md.
+1. Ekstrak seluruh isi `TouchRpc-win-x64.zip` ke folder yang dapat ditulis pengguna.
+2. Jalankan `TouchRpc.App.exe`. Paket bersifat self-contained dan tidak memerlukan instalasi .NET terpisah.
+3. Klik **Detect** untuk mencari `TouchClient.exe`. Jika path proses tidak tersedia, klik **Browse** dan pilih `TouchClient_Data\output_log.txt`.
+4. Character Role ID boleh dikosongkan. Jika diisi, gunakan character role ID berupa digit—bukan launcher userid.
+5. Gunakan role calibration hanya bila bukti role dari log tidak lengkap.
+6. Isi public Discord Application ID dan optional large image asset key bila ingin mengaktifkan Discord Rich Presence. Jangan masukkan Client Secret atau token.
+7. Klik **Start monitoring**.
 
-## Input yang belum tersedia
-- Pilihan license project ; ga boleh menambahkan license tanpa keputusan owner.
-- Discord Application ID, nama software final, image dan asset key untuk live verification. Nilai tidak di-hard-code; masukkan melalui settings lokal.
-- Deteksi role ID local untuk pengguna belum ada .
+Menutup jendela akan menyembunyikan aplikasi ke notification area bila opsi **Minimize to notification area when closing** aktif. Double-click ikon tray atau pilih **Open TOUCH RPC** untuk membuka kembali. Pilih **Exit** agar monitoring berhenti dan Rich Presence dibersihkan.
 
+Settings disimpan di `%LocalAppData%\TouchRpc\settings.json`, bukan di repository atau folder game. Raw log hanya dibaca dengan file sharing yang sesuai dan tidak disalin.
 
-## Toolchain
-Project menargetkan .NET 10 LTS dan dikunci ke SDK 10.0.402 melalui `global.json`.
+## Tooltip nickname
+
+Rilis pertama tidak menyediakan input nickname manual. Tooltip large image menggunakan `TOUCH` sampai ditemukan sumber log yang memetakan nickname karakter secara eksplisit ke character role ID lokal. Aplikasi tidak mengambil `ElsePlayerName`, nama room, urutan roster, launcher userid, atau nickname yang di-hard-code.
+
+## Discord
+
+Tanpa Application ID, status Discord tetap `Disabled` dan preview berfungsi normal. Dengan konfigurasi valid, adapter mengirim Details/State, optional large image, dan tooltip `TOUCH`; payload identik dideduplicate, latest state dipulihkan setelah reconnect, dan presence dibersihkan saat Stop, game exit yang terdeteksi, atau app Exit.
+
+Discord desktop harus berjalan, pengguna harus login, dan activity sharing harus aktif. Asset key harus sama persis dengan Rich Presence asset pada Discord Application tersebut.
+
+## Troubleshooting
+
+- **TouchClient tidak ditemukan:** gunakan Browse; akses path proses dapat ditolak Windows dan bukan berarti log rusak.
+- **Log missing/unreadable:** pastikan memilih `output_log.txt`, game sedang berjalan, dan akun Windows memiliki izin baca.
+- **Discord Disabled:** isi Application ID publik yang hanya berisi digit.
+- **Discord tidak menampilkan activity:** buka Discord desktop, cek activity sharing, lalu restart monitoring.
+- **Large image tidak muncul:** pastikan asset sudah tersedia pada Discord Application dan asset key cocok persis.
+- **Role/roster Unknown:** jangan paksa asumsi; gunakan kalibrasi role hanya jika benar-benar diketahui dan tunggu rangkaian room lengkap.
+- **Close tidak keluar:** aplikasi berada di tray; gunakan menu **Exit** pada ikon notification area.
+
+Kasus spectator saat gameplay harus tetap `Spectating`. Jika terlihat `Smashing Key`, catat hanya Phase, Role, Roster, State, dan Diagnostic—jangan kirim raw log atau settings privat.
 
 ## Build dan test
+
+Project menargetkan .NET 10 LTS dan dikunci ke SDK 10.0.402 melalui `global.json`.
+
 ```powershell
 dotnet restore TouchRpc.slnx
+dotnet format TouchRpc.slnx --verify-no-changes --no-restore
 dotnet build TouchRpc.slnx -c Release --no-restore
 dotnet test TouchRpc.slnx -c Release --no-build
 ```
 
-Pada mesin bootstrap ini SDK 10.0.402 dipasang user-local tanpa mengubah PATH. Jika `dotnet --version` tidak menemukan SDK dari `global.json`, gunakan:
+Jika SDK user-local digunakan:
+
 ```powershell
 $dotnet = "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe"
 & $dotnet build TouchRpc.slnx -c Release
@@ -43,35 +72,23 @@ $dotnet = "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe"
 ```
 
 Replay fixture sintetis:
+
 ```powershell
 dotnet run --project src/TouchRpc.Replay -c Release -- `
   tests/TouchRpc.Tests/Fixtures/midgame-spectator.synthetic.log `
   --role-id 10000000001
 ```
 
-Console hanya menampilkan state akhir dan diagnostik terpilih. Console tidak mencetak raw line, chat, nama anggota, atau daftar role ID. Parameter `--role joined|spectator` dapat dipakai untuk kalibrasi eksplisit saat bukti role dari log tidak lengkap.
+Membuat paket portable lokal:
 
-Console replay tetap tersedia untuk diagnosis offline. History log tidak dipakai untuk mengarang durasi AFK; timer replay dimulai dari monitoring dengan diagnostic eksplisit.
-
-## Menjalankan preview Windows P4
 ```powershell
-& "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" run --project src/TouchRpc.App -c Release
+.\scripts\Publish-Release.ps1
 ```
 
-Alur penggunaan:
-1. Klik **Detect**. Jika path proses dapat dibaca, aplikasi membentuk path `TouchClient_Data/output_log.txt` dari folder executable.
-2. Jika process path tidak tersedia atau lokasi berbeda, klik **Browse** dan pilih `output_log.txt` secara eksplisit.
-3. Isi Character Role ID hanya bila diperlukan; launcher userid bukan character roleid. Biarkan kosong jika belum diketahui.
-4. Gunakan role calibration hanya jika bukti role dari log tidak lengkap.
-5. Klik **Start monitoring** dan periksa Source Health serta Presence Preview.
-6. Untuk Discord, isi public Application ID dan optional large image asset key. Jangan masukkan Client Secret atau token.
+Output berada di `artifacts\TouchRpc-win-x64\` dan `artifacts\TouchRpc-win-x64.zip`; keduanya diabaikan Git. GitHub Actions menjalankan build/test/publish yang sama pada runner Windows dan mengunggah ZIP sebagai workflow artifact. Script tidak membuat atau menerbitkan GitHub Release.
 
-AFK berarti 30 menit berada di room tanpa mulai bermain sebagai peserta Joined. Ini bukan deteksi input Windows. Spectator tetap menghitung selama gameplay/results; ready, chat, aktivitas anggota lain, host transfer, slot changes, dan role switch tidak mereset timer. Joined yang mulai bermain membatalkan AFK dan interval baru dimulai saat kembali ke WaitRoom.
+## Status rilis dan lisensi
 
-Preview menampilkan elapsed AFK, origin timer, dan diagnostic. Jika monitoring dimulai dari log yang sudah berisi history room, timer dimulai saat monitoring karena durasi monotonic sebelumnya tidak tersedia. Threshold pendek hanya digunakan di automated tests dan bukan default runtime.
+Source P5 menyiapkan paket portable, tetapi clean-machine install dan seluruh matriks live Discord belum selesai. Publikasi GitHub Release/installer merupakan keputusan terpisah.
 
-Settings disimpan di `%LocalAppData%\TouchRpc\settings.json`, bukan di repository atau folder game. Raw log hanya dibaca dan tidak disalin.
-
-Tanpa Application ID, status Discord tetap `Disabled` dan preview berfungsi normal. Dengan konfigurasi valid, adapter mengirim Details/State serta large-image tooltip nickname, melakukan deduplication, memulihkan latest state setelah reconnect, dan clear saat Stop/game exit. Tray dan packaging tetap belum termasuk P4.
-
-Yayyy itu step awal nya gengggg. kalo bisa yaudah
+Pemilik belum memilih lisensi project, sehingga repository belum memiliki `LICENSE`. Dependency langsung dan lisensinya dicatat di `THIRD-PARTY-NOTICES.md`.

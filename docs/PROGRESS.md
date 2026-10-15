@@ -8,7 +8,7 @@
 - Path detection dan role ID otomatis belum diuji untuk pengguna lain.
 
 ## Fase aktif berikutnya
-P4 Discord adapter: implementasi lokal selesai; live IPC/hover/reconnect/latency menunggu Application ID dan asset key proyek yang valid.
+Rilis pertama siap untuk review pengguna dari source dan paket portable P5. Publikasi GitHub Release/installer, pilihan lisensi, clean-machine test, interaksi tray manual, dan live reproduction spectator-during-gameplay tetap memerlukan keputusan/hasil pengguna.
 
 ## 15 Oktober 2026 / P0 / main
 Perubahan:
@@ -204,6 +204,45 @@ Risiko atau unknown:
 Push status: dicatat pada laporan fase setelah commit/push.
 
 Langkah berikutnya: pengguna menyediakan/memasukkan public Application ID dan asset key, lalu menjalankan protokol live P4. Jangan mulai P5 sebelum hasil review P4.
+
+## 15 Oktober 2026 / P5 tray, packaging dan persiapan rilis / main
+Perubahan:
+- Seluruh input, binding identitas dan persistence nickname manual dihapus. Settings JSON lama tetap dapat dimuat; field nickname lama diabaikan dan hilang pada save berikutnya.
+- Model nickname otomatis tetap tersedia untuk mapping terverifikasi di masa depan. Selama belum ada sumber log yang sah, Discord large-image tooltip memakai `TOUCH`.
+- Ditambahkan notification-area tray dengan preferensi lokal: close menyembunyikan jendela, double-click/menu Open membukanya, dan menu Exit melakukan save/dispose serta clear Discord.
+- Ditambahkan script publish portable self-contained single-file Windows x64, workflow CI Windows build/test/package, README setup/troubleshooting, dan third-party notices.
+- Dokumentasi evidence dan acceptance diperbarui: `HostPlayer id` hanya kandidat identitas; nama room/`ElsePlayerName` tidak pernah dipakai sebagai nickname lokal.
+- Nickname dan character role ID pribadi yang masih tertulis di dokumentasi lama dihapus. `ExeCode-Generation.py` milik pengguna tetap untracked dan tidak disentuh.
+
+Keputusan + alasan:
+- Pengguna memilih menghapus manual nickname sepenuhnya daripada merilis fallback yang memerlukan input. Automatic nickname menjadi penyempurnaan berikutnya dan tidak menghalangi rilis pertama.
+- Paket dibuat portable self-contained agar pengguna target tidak perlu memasang .NET. Output build/ZIP tetap di `artifacts/`, diabaikan Git, dan tidak diterbitkan otomatis.
+- Tray memakai `System.Windows.Forms.NotifyIcon` bawaan Windows sehingga tidak menambah dependency runtime NuGet.
+- Lisensi project belum dipilih; tidak dibuat `LICENSE`. Notices mencatat direct package `DiscordRichPresence` 1.6.1.70 (MIT) dan MSTest 4.0.2 (MIT).
+
+Pemeriksaan dijalankan dan hasil:
+- Formatter verification dan Release build lulus.
+- Automated tests: 79 passed, 0 failed, 0 skipped. Test manual-nickname diganti dengan regression automatic-only, fallback `TOUCH`, settings migration dan default tray.
+- Replay fixture midgame spectator tetap menghasilkan `2 Players Joined` / `Spectating`.
+- Publish `win-x64` self-contained single-file dan ZIP berhasil. ZIP berisi tepat executable, README dan third-party notices; tidak ada settings, raw log, JSON privat atau PDB.
+- WPF publish smoke lulus: main window muncul dan close membuat proses tetap hidup di tray.
+- NuGet vulnerability audit tidak menemukan package vulnerable dari source aktif.
+- CI workflow ditambahkan tetapi run GitHub pertamanya baru dapat diamati setelah push.
+
+Live verification:
+- User-confirmed sebelum P5: lobby, room counts, waiting, spectator-in-room, playing activity dan jalur tooltip Discord pernah tampil.
+- Pending: klik nyata tray Open/Exit, clean-machine extraction/run, restart Discord dan dua urutan startup yang dirinci, clear nyata, latency target 2–5 detik, serta boundary AFK live.
+- Laporan spectator saat gameplay pernah menampilkan `Smashing Key` belum direproduksi; expected tetap `Spectating`, jadi kasus ini bukan pass.
+
+Risiko atau unknown:
+- Deteksi nickname otomatis belum tersedia karena log belum menunjukkan mapping nickname ↔ self character role ID yang defensible.
+- Paket portable belum ditandatangani dan belum dipublikasikan sebagai GitHub Release/installer.
+- Tidak ada klaim clean-machine compatibility sampai diuji pada mesin lain.
+- Project belum memiliki lisensi source sampai pemilik memilihnya.
+
+Push status: dicatat pada laporan fase setelah commit/push.
+
+Langkah berikutnya: review paket portable dan jalankan checklist pengguna P5. Jangan otomatis memulai fitur pascarilis atau menerbitkan GitHub Release.
 
 ## Format update fase
 Tanggal / fase / branch:

@@ -37,12 +37,14 @@ Parser P1 hanya mengenali pola yang tercantum di dokumen ini dan mengabaikan bar
 `_OnCmd_RoomLeave_Re id: ID` diperlakukan sebagai keluar anggota. Jika ID cocok dengan character role ID lokal yang dikonfigurasi manual, seluruh state room dibersihkan; ID lain hanya dihapus dari roster unik.
 
 ## Bukti nickname lokal P3
-Pemeriksaan read-only pada log aktual menemukan self role ID eksplisit melalui `isuserself=True`, tetapi belum menemukan field nickname yang dipetakan eksplisit ke role ID tersebut. `ElsePlayerName` muncul untuk pemain lain dan tidak boleh dipilih. Karena itu deteksi otomatis nickname belum diklaim berhasil; UI menyediakan manual fallback yang terikat identitas dan default tooltip `TOUCH`.
+Pemeriksaan read-only pada log aktual menemukan self role ID eksplisit melalui `isuserself=True`, tetapi belum menemukan field nickname yang dipetakan eksplisit ke role ID tersebut. `ElsePlayerName` muncul untuk pemain lain dan tidak boleh dipilih. Karena itu deteksi otomatis nickname belum diklaim berhasil; rilis pertama memakai tooltip umum `TOUCH` dan tidak menyediakan input nickname manual.
+
+Pada relogin 15 Oktober 2026, satu marker `HostPlayer id` cocok dengan self role ID dari `isuserself=True` pada sesi yang sama. Ini mendukung `HostPlayer id` sebagai kandidat evidence identitas, tetapi satu alur belum membuktikannya universal dan parser belum menggunakannya. `RoomCreate roomName` bukan bukti nickname lokal dan tidak boleh diparsing sebagai nickname.
 
 ## Contoh rangkaian terverifikasi
 2026-10-15 13:25:31 masuk langsung PlayRoom sebagai spectator (konfirmasi pengguna).
 13:29:01 MusicEnd → 13:29:21 WaitRoom (tetap spectator) → 13:29:58 SwitchRoleType + balasan lokal (Join, konfirmasi pengguna).
-2026-10-13: role lokal yang diuji 7793881091; JANGAN jadikan default universal.
+2026-10-13: satu character role ID lokal pribadi diuji; nilainya tidak dicatat di dokumentasi publik dan tidak boleh dijadikan default universal.
 
 ## Respons log
 Tes PowerShell: SwitchRoleType timestamp 14:34:53 terbaca 14:34:53.488; berikutnya 14:35:00 terbaca 14:35:00.767. Ini menunjukkan respons cepat pada sampel, bukan ukuran latency presisi atau SLA. Timestamp wall client hanya detik; `time=` merupakan waktu internal client, bukan Unix timestamp.

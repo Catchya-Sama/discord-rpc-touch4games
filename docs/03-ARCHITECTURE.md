@@ -53,7 +53,7 @@ P3 nickname preparation mengenali self role ID hanya dari marker eksplisit `isus
 
 `NicknamePolicy` memilih otomatis terverifikasi, lalu manual yang cocok identitas, lalu `TOUCH`. Manual tanpa binding hanya hidup dalam monitoring session dan baru dipersistenkan setelah role ID terverifikasi. Session file/client baru membuat reducer baru dan menghapus otomatis; pergantian self role ID juga membersihkan otomatis serta room/AFK lama. Lobby/keluar room tidak menghapus identitas.
 
-Core menyimpan nickname Unicode penuh dan kandidat tooltip terpisah. Kandidat P4 dibatasi 2–128 text elements dengan pemotongan pada batas grapheme/text element. Nickname tidak menjadi bagian `PresenceView` Details/State sehingga perubahan identitas tidak menyentuh roster atau timer AFK.
+Core menyimpan nickname otomatis Unicode penuh dan kandidat tooltip terpisah. Kandidat dibatasi 2–128 text elements dengan pemotongan pada batas grapheme/text element. Nickname tidak menjadi bagian `PresenceView` Details/State sehingga perubahan identitas tidak menyentuh roster atau timer AFK. Rilis pertama tidak menyediakan input nickname manual; selama mapping otomatis belum terverifikasi, tooltip menggunakan `TOUCH`.
 
 ## Discord
 Adapter interface agar Core dapat diuji tanpa Discord. Fase awal disabled bila ID belum tersedia, jangan menghalangi preview.

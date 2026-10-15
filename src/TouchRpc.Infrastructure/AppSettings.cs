@@ -8,10 +8,9 @@ public sealed record AppSettings(
     string? LocalRoleId = null,
     LocalRole ConfiguredRole = LocalRole.Unknown,
     int AfkThresholdMinutes = 30,
-    string? ManualNickname = null,
-    string? ManualNicknameRoleId = null,
     string? DiscordApplicationId = null,
-    string? DiscordLargeImageKey = null);
+    string? DiscordLargeImageKey = null,
+    bool MinimizeToTray = true);
 
 public sealed class AppSettingsStore
 {
@@ -67,12 +66,6 @@ public sealed class AppSettingsStore
         if (roleId is not null && !RoleId.IsValid(roleId)) roleId = null;
         var path = string.IsNullOrWhiteSpace(settings.LogPath) ? null : settings.LogPath.Trim();
         var thresholdMinutes = settings.AfkThresholdMinutes > 0 ? settings.AfkThresholdMinutes : 30;
-        var manualNicknameRoleId = settings.ManualNicknameRoleId;
-        if (manualNicknameRoleId is not null && !RoleId.IsValid(manualNicknameRoleId)) manualNicknameRoleId = null;
-        var manualNickname = string.IsNullOrWhiteSpace(settings.ManualNickname)
-            ? null
-            : settings.ManualNickname.Trim();
-        if (manualNicknameRoleId is null) manualNickname = null;
         var discordApplicationId = NormalizeDiscordApplicationId(settings.DiscordApplicationId);
         var discordLargeImageKey = string.IsNullOrWhiteSpace(settings.DiscordLargeImageKey)
             ? null
@@ -83,8 +76,6 @@ public sealed class AppSettingsStore
             LogPath = path,
             LocalRoleId = roleId,
             AfkThresholdMinutes = thresholdMinutes,
-            ManualNickname = manualNickname,
-            ManualNicknameRoleId = manualNicknameRoleId,
             DiscordApplicationId = discordApplicationId,
             DiscordLargeImageKey = discordLargeImageKey,
         };

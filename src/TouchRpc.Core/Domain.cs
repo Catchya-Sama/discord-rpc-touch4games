@@ -6,8 +6,8 @@ public enum RosterCompleteness { Unknown, Partial, Complete }
 public enum EvidenceKind { Observed, UserConfigured, Inferred, Unknown }
 public enum MemberEvidence { Snapshot, RoomMember, AddPlayer }
 public enum AfkTimerOrigin { None, RoomEntryObserved, MonitoringStarted }
-public enum NicknameSource { AutomaticVerified, Manual, GeneralFallback }
-public enum NicknameDiagnostic { None, AutomaticUnavailable, ManualUnbound, ManualIdentityMismatch, TooltipTooShort, TooltipTruncated }
+public enum NicknameSource { AutomaticVerified, GeneralFallback }
+public enum NicknameDiagnostic { None, AutomaticUnavailable, TooltipTooShort, TooltipTruncated }
 
 public enum DiagnosticCode
 {

@@ -30,8 +30,8 @@ Gunakan fixture sintetis; dokumentasi log adalah hasil riset, bukan oracle unive
 | Client exit/stop monitoring | clear RPC |
 | isuserself=True/False | hanya True menetapkan character role ID lokal |
 | ElsePlayerName/pemain lain | tidak pernah mengganti nickname lokal |
-| Nickname otomatis/manual/fallback | verified auto → manual cocok ID → TOUCH |
-| Account/session berubah | otomatis lama dibersihkan; manual mismatch tidak dipakai |
+| Nickname otomatis/fallback | verified auto → TOUCH |
+| Account/session berubah | nickname otomatis lama dibersihkan |
 | Unicode/panjang tooltip | kapitalisasi tetap, grapheme aman, kandidat 2–128 |
 | Perubahan nickname | count, state dan anchor AFK tidak berubah |
 
@@ -105,10 +105,10 @@ Clock test deterministik menguji:
 7. Tutup/restart TOUCH atau ganti file session. Expected: timer lama hilang dan session baru dimulai tanpa membawa AFK lama.
 8. Kirim hanya Source Health, Phase, Role, Roster, AFK dan Diagnostic; jangan kirim raw log.
 
-Hasil acceptance 15 Oktober 2026: pengguna mengonfirmasi phase/status, role, roster/count dan nickname manual pada alur live yang dicoba berfungsi baik. Boundary AFK 30 menit tidak dijalankan live karena durasinya; acceptance AFK memakai automated clock tests, sementara status boundary live tetap `not run`, bukan `pass`. Automated tests memakai threshold pendek hanya untuk mempercepat test dan selalu diberi label test.
+Hasil acceptance 15 Oktober 2026: pengguna mengonfirmasi phase/status dan roster/count pada alur live yang dicoba. Pengujian nickname manual sebelumnya membuktikan jalur Discord `assets.large_text`, tetapi fitur manual kemudian dihapus dari scope rilis pertama atas keputusan pengguna. Boundary AFK 30 menit tidak dijalankan live karena durasinya; acceptance AFK memakai automated clock tests, sementara status boundary live tetap `not run`, bukan `pass`. Automated tests memakai threshold pendek hanya untuk mempercepat test dan selalu diberi label test.
 
 ## Pemeriksaan nickname P3
-Gunakan fixture sintetis; raw log dan nickname pengguna tidak masuk repository. Test mencakup self identity eksplisit, penolakan `ElsePlayerName`, precedence otomatis/manual/fallback, binding manual, pergantian account/session, keluar room, Unicode, batas tooltip dan regresi status/roster/AFK. Log live saat ini hanya membuktikan self role ID, belum nickname otomatis. Pada P4, verifikasi `assets.large_text` dengan hover logo Discord; jangan tandai pass dari preview P3.
+Gunakan fixture sintetis; raw log dan nickname pengguna tidak masuk repository. Test mencakup self identity eksplisit, penolakan `ElsePlayerName`, automatic/fallback, pergantian account/session, keluar room, Unicode, batas tooltip dan regresi status/roster/AFK. Log live saat ini hanya membuktikan self role ID, belum nickname otomatis. Jalur `assets.large_text` sudah user-confirmed ketika input manual masih tersedia; rilis pertama menggunakan `TOUCH` sampai mapping otomatis tersedia.
 
 ## Pemeriksaan P4
 Automated tests memakai fake transport dan menguji:
@@ -130,7 +130,7 @@ Automated tests memakai fake transport dan menguji:
 
 ### Protokol live P4 pengguna
 1. Urutan startup A: buka Discord desktop terlebih dahulu, lalu preview TOUCH RPC. Isi Application ID/asset key, pilih log dan Start monitoring. Expected: status `Connected`, activity muncul, Details/State sama dengan preview.
-2. Hover large image. Expected: tooltip memakai nickname manual/verified; fallback adalah `TOUCH`. Jika asset key kosong atau belum tersedia di application, large image/hover memang tidak tampil.
+2. Hover large image. Expected untuk rilis pertama: tooltip `TOUCH`. Nickname hanya boleh muncul bila kelak tersedia mapping otomatis terverifikasi. Jika asset key kosong atau belum tersedia di application, large image/hover memang tidak tampil.
 3. Uji Lobby → Waiting → Smashing Key → Spectating/AFK yang tersedia. Catat waktu preview berubah dan waktu Discord terlihat berubah; target observasi 2–5 detik.
 4. Tutup Discord saat monitoring. Expected: status menjadi Disconnected. Ubah state game bila memungkinkan, buka Discord kembali, dan pastikan hanya state terbaru yang muncul.
 5. Urutan startup B: jalankan preview dan Start monitoring ketika Discord tertutup, lalu buka Discord. Expected: reconnect dan latest state saja yang muncul.
@@ -138,4 +138,4 @@ Automated tests memakai fake transport dan menguji:
 7. Bila monitoring mengikuti proses, tutup TOUCH. Expected: source `GameClosed` dan Rich Presence dibersihkan. Buka TOUCH kembali; expected session baru dan latest presence setelah log tersedia.
 8. Kirim hasil status/Details/State/tooltip dan waktu observasi saja. Jangan kirim settings.json, raw log, Application Client Secret atau token.
 
-Live Discord IPC, hover asset, restart Discord dan target 2–5 detik tetap pending sampai diuji dengan Application ID/aset proyek yang valid.
+Live pengguna telah mengonfirmasi Discord activity untuk lobby, room count, waiting, spectator-in-room dan playing, serta jalur hover tooltip saat input manual masih tersedia. Restart Discord, dua urutan startup, clear nyata dan target 2–5 detik belum dirinci per kasus, sehingga tetap pending. Laporan bahwa spectator saat gameplay pernah menampilkan `Smashing Key` belum direproduksi; expected tetap `Spectating` dan kasus ini belum ditandai pass.

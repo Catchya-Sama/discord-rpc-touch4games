@@ -6,11 +6,9 @@ namespace TouchRpc.Tests;
 public sealed class NicknameTests
 {
     [TestMethod]
-    public void VerifiedAutomaticNickname_WinsOverManualNickname()
+    public void VerifiedAutomaticNickname_IsPublished()
     {
-        var reducer = new TouchStateReducer(
-            manualNickname: "Manual Name",
-            manualNicknameRoleId: "10000000001");
+        var reducer = new TouchStateReducer();
         reducer.Apply(new LocalIdentityObserved("10000000001"));
         reducer.Apply(new LocalNicknameObserved("10000000001", "Verified Name"));
 
@@ -22,40 +20,25 @@ public sealed class NicknameTests
     [TestMethod]
     public void OtherPlayersNickname_CannotReplaceLocalNickname()
     {
-        var reducer = new TouchStateReducer(manualNickname: "Local Manual");
+        var reducer = new TouchStateReducer();
         reducer.Apply(new LocalIdentityObserved("10000000001"));
         reducer.Apply(new LocalNicknameObserved("10000000002", "Other Player"));
 
-        Assert.AreEqual("Local Manual", reducer.State.LocalNickname);
-        Assert.AreEqual(NicknameSource.Manual, reducer.State.NicknameSource);
+        Assert.IsNull(reducer.State.LocalNickname);
+        Assert.AreEqual(NicknameSource.GeneralFallback, reducer.State.NicknameSource);
+        Assert.AreEqual("TOUCH", reducer.State.NicknameTooltip);
     }
 
     [TestMethod]
-    public void ManualNickname_WorksWhenAutomaticMappingIsUnavailable()
+    public void MissingAutomaticMapping_FallsBackToTouch()
     {
-        var reducer = new TouchStateReducer(
-            localRoleId: "10000000001",
-            manualNickname: "Manual Name",
-            manualNicknameRoleId: "10000000001");
-        reducer.Tick();
-
-        Assert.AreEqual("Manual Name", reducer.State.LocalNickname);
-        Assert.AreEqual(NicknameSource.Manual, reducer.State.NicknameSource);
-        Assert.AreEqual(NicknameDiagnostic.AutomaticUnavailable, reducer.State.NicknameDiagnostic);
-    }
-
-    [TestMethod]
-    public void ManualNicknameForDifferentIdentity_FallsBackToTouch()
-    {
-        var reducer = new TouchStateReducer(
-            localRoleId: "10000000002",
-            manualNickname: "Old Account",
-            manualNicknameRoleId: "10000000001");
+        var reducer = new TouchStateReducer(localRoleId: "10000000001");
         reducer.Tick();
 
         Assert.IsNull(reducer.State.LocalNickname);
+        Assert.AreEqual(NicknameSource.GeneralFallback, reducer.State.NicknameSource);
+        Assert.AreEqual(NicknameDiagnostic.AutomaticUnavailable, reducer.State.NicknameDiagnostic);
         Assert.AreEqual("TOUCH", reducer.State.NicknameTooltip);
-        Assert.AreEqual(NicknameDiagnostic.ManualIdentityMismatch, reducer.State.NicknameDiagnostic);
     }
 
     [TestMethod]
@@ -97,7 +80,7 @@ public sealed class NicknameTests
     public void UnicodeNickname_PreservesCapitalizationAndTextElements()
     {
         var nickname = "Xóóty 界🎵";
-        var selected = NicknamePolicy.Select("10000000001", nickname, "10000000001", null, null);
+        var selected = NicknamePolicy.Select("10000000001", nickname, "10000000001");
 
         Assert.AreEqual(nickname, selected.LocalNickname);
         Assert.AreEqual(nickname, selected.Tooltip);
@@ -106,13 +89,11 @@ public sealed class NicknameTests
     [TestMethod]
     public void DiscordTooltip_UsesFallbackForOneCharacterAndTruncatesAtTextElementBoundary()
     {
-        var shortName = NicknamePolicy.Select("10000000001", "界", "10000000001", null, null);
+        var shortName = NicknamePolicy.Select("10000000001", "界", "10000000001");
         var longName = NicknamePolicy.Select(
             "10000000001",
             string.Concat(Enumerable.Repeat("e\u0301", 130)),
-            "10000000001",
-            null,
-            null);
+            "10000000001");
 
         Assert.AreEqual("TOUCH", shortName.Tooltip);
         Assert.AreEqual(NicknameDiagnostic.TooltipTooShort, shortName.Diagnostic);

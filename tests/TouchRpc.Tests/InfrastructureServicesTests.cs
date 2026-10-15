@@ -24,14 +24,13 @@ public sealed class InfrastructureServicesTests
         var path = Path.Combine(temporary.Path, "settings.json");
         var store = new AppSettingsStore(path);
         var expected = new AppSettings(
-            "C:\\Games\\Touch\\output_log.txt",
-            "10000000001",
-            LocalRole.Spectator,
-            45,
-            "Synthetic Nickname",
-            "10000000001",
-            "123456789012345678",
-            "touch-logo");
+            LogPath: "C:\\Games\\Touch\\output_log.txt",
+            LocalRoleId: "10000000001",
+            ConfiguredRole: LocalRole.Spectator,
+            AfkThresholdMinutes: 45,
+            DiscordApplicationId: "123456789012345678",
+            DiscordLargeImageKey: "touch-logo",
+            MinimizeToTray: false);
 
         await store.SaveAsync(expected);
         var actual = await store.LoadAsync();
@@ -66,17 +65,26 @@ public sealed class InfrastructureServicesTests
     }
 
     [TestMethod]
-    public async Task SettingsStore_DoesNotPersistUnboundManualNickname()
+    public async Task SettingsStore_IgnoresLegacyManualNicknameFields()
     {
         using var temporary = new TemporaryDirectory();
         var path = Path.Combine(temporary.Path, "settings.json");
         var store = new AppSettingsStore(path);
 
-        await store.SaveAsync(new AppSettings(ManualNickname: "Unbound Name"));
+        await File.WriteAllTextAsync(path, """
+            {
+              "LogPath": "C:\\Games\\Touch\\output_log.txt",
+              "ManualNickname": "Legacy Name",
+              "ManualNicknameRoleId": "10000000001"
+            }
+            """);
         var actual = await store.LoadAsync();
+        await store.SaveAsync(actual);
+        var migratedJson = await File.ReadAllTextAsync(path);
 
-        Assert.IsNull(actual.ManualNickname);
-        Assert.IsNull(actual.ManualNicknameRoleId);
+        Assert.AreEqual("C:\\Games\\Touch\\output_log.txt", actual.LogPath);
+        Assert.IsTrue(actual.MinimizeToTray);
+        Assert.DoesNotContain("ManualNickname", migratedJson, StringComparison.Ordinal);
     }
 
     [TestMethod]

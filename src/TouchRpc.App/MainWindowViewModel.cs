@@ -15,9 +15,6 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private MonitoringSession? _session;
     private string _logPath = string.Empty;
     private string _localRoleId = string.Empty;
-    private string _manualNickname = string.Empty;
-    private string? _manualNicknameRoleId;
-    private bool _manualNicknameAwaitingBinding;
     private LocalRole _configuredRole;
     private TouchProcessCandidate? _selectedProcess;
     private bool _followProcessLifecycle;
@@ -35,6 +32,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private string _discordApplicationId = string.Empty;
     private string _discordLargeImageKey = string.Empty;
     private string _discordStatus = "Disabled";
+    private bool _minimizeToTray = true;
     private int _afkThresholdMinutes = 30;
 
     public ObservableCollection<TouchProcessCandidate> ProcessCandidates { get; } = [];
@@ -54,17 +52,6 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         set => SetProperty(ref _localRoleId, value);
     }
 
-    public string ManualNickname
-    {
-        get => _manualNickname;
-        set
-        {
-            if (!SetProperty(ref _manualNickname, value)) return;
-            _manualNicknameRoleId = null;
-            _manualNicknameAwaitingBinding = !string.IsNullOrWhiteSpace(value);
-        }
-    }
-
     public string DiscordApplicationId
     {
         get => _discordApplicationId;
@@ -75,6 +62,12 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     {
         get => _discordLargeImageKey;
         set => SetProperty(ref _discordLargeImageKey, value);
+    }
+
+    public bool MinimizeToTray
+    {
+        get => _minimizeToTray;
+        set => SetProperty(ref _minimizeToTray, value);
     }
 
     public LocalRole ConfiguredRole
@@ -135,12 +128,9 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         LocalRoleId = settings.LocalRoleId ?? string.Empty;
         ConfiguredRole = settings.ConfiguredRole;
         _afkThresholdMinutes = settings.AfkThresholdMinutes;
-        _manualNickname = settings.ManualNickname ?? string.Empty;
-        _manualNicknameRoleId = settings.ManualNicknameRoleId;
         DiscordApplicationId = settings.DiscordApplicationId ?? string.Empty;
         DiscordLargeImageKey = settings.DiscordLargeImageKey ?? string.Empty;
-        _manualNicknameAwaitingBinding = false;
-        OnPropertyChanged(nameof(ManualNickname));
+        MinimizeToTray = settings.MinimizeToTray;
         ConfigureDiscord();
         DetectProcesses();
     }
@@ -188,9 +178,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             LogPath.Trim(),
             roleId,
             ConfiguredRole,
-            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes),
-            manualNickname: string.IsNullOrWhiteSpace(ManualNickname) ? null : ManualNickname,
-            manualNicknameRoleId: _manualNicknameRoleId);
+            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes));
         _monitorCancellation = new CancellationTokenSource();
         _followProcessLifecycle = SelectedProcess is not null;
         IsMonitoring = true;
@@ -230,7 +218,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             {
                 if (_followProcessLifecycle && SelectedProcess is not null && !IsProcessRunning(SelectedProcess.ProcessId))
                 {
-                    _ = ApplySnapshot(_session.ClearForGameClosed());
+                    ApplySnapshot(_session.ClearForGameClosed());
                     _discord?.Clear();
                     SelectedProcess = null;
                 }
@@ -246,9 +234,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                             LogPath.Trim(),
                             roleId,
                             ConfiguredRole,
-                            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes),
-                            manualNickname: string.IsNullOrWhiteSpace(ManualNickname) ? null : ManualNickname,
-                            manualNicknameRoleId: _manualNicknameRoleId);
+                            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes));
                         SourceDiagnostic = "TouchClient restarted; monitoring opened a new session.";
                     }
                     else
@@ -259,7 +245,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                 }
 
                 var snapshot = await _session.PollAsync(cancellationToken);
-                if (ApplySnapshot(snapshot)) await SaveSettingsAsync(snapshot.LocalRoleId);
+                ApplySnapshot(snapshot);
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
         }
@@ -274,7 +260,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         }
     }
 
-    private bool ApplySnapshot(MonitoringSnapshot snapshot)
+    private void ApplySnapshot(MonitoringSnapshot snapshot)
     {
         SourceHealth = snapshot.SourceHealth.ToString();
         SourceDiagnostic = snapshot.SourceDiagnostic;
@@ -299,24 +285,19 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                 string.IsNullOrWhiteSpace(DiscordLargeImageKey) ? null : DiscordLargeImageKey.Trim(),
                 snapshot.NicknameTooltip));
         }
-        if (_manualNicknameAwaitingBinding && !string.IsNullOrWhiteSpace(ManualNickname) && snapshot.LocalRoleId is not null)
-        {
-            _manualNicknameRoleId = snapshot.LocalRoleId;
-            _manualNicknameAwaitingBinding = false;
-            return true;
-        }
-        return false;
     }
 
+    public Task SaveSettingsAsync() => SaveSettingsAsync(
+        string.IsNullOrWhiteSpace(LocalRoleId) ? null : LocalRoleId.Trim());
+
     private Task SaveSettingsAsync(string? roleId) => _settingsStore.SaveAsync(new AppSettings(
-        LogPath.Trim(),
-        roleId,
-        ConfiguredRole,
-        _afkThresholdMinutes,
-        string.IsNullOrWhiteSpace(ManualNickname) ? null : ManualNickname,
-        _manualNicknameRoleId,
-        DiscordApplicationId,
-        DiscordLargeImageKey));
+        LogPath: LogPath.Trim(),
+        LocalRoleId: roleId,
+        ConfiguredRole: ConfiguredRole,
+        AfkThresholdMinutes: _afkThresholdMinutes,
+        DiscordApplicationId: DiscordApplicationId,
+        DiscordLargeImageKey: DiscordLargeImageKey,
+        MinimizeToTray: MinimizeToTray));
 
     private void ConfigureDiscord()
     {

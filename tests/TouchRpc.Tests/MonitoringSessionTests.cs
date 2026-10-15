@@ -52,7 +52,7 @@ public sealed class MonitoringSessionTests
     }
 
     [TestMethod]
-    public async Task SelfIdentityAndBoundManualNickname_AppearInSnapshotWithoutChangingPresence()
+    public async Task SelfIdentityWithoutVerifiedNickname_UsesGeneralTooltip()
     {
         using var temporary = new TemporaryLog(string.Join("\n",
         [
@@ -63,18 +63,15 @@ public sealed class MonitoringSessionTests
             "the_current_world Type=WaitRoom",
             string.Empty,
         ]));
-        var session = new MonitoringSession(
-            temporary.Path,
-            manualNickname: "Synthetic Nickname",
-            manualNicknameRoleId: "10000000001");
+        var session = new MonitoringSession(temporary.Path);
 
         var snapshot = await session.PollAsync();
 
         Assert.AreEqual("10000000001", snapshot.LocalRoleId);
         Assert.AreEqual(EvidenceKind.Observed, snapshot.LocalRoleIdEvidence);
-        Assert.AreEqual("Synthetic Nickname", snapshot.LocalNickname);
-        Assert.AreEqual(NicknameSource.Manual, snapshot.NicknameSource);
-        Assert.AreEqual("Synthetic Nickname", snapshot.NicknameTooltip);
+        Assert.IsNull(snapshot.LocalNickname);
+        Assert.AreEqual(NicknameSource.GeneralFallback, snapshot.NicknameSource);
+        Assert.AreEqual("TOUCH", snapshot.NicknameTooltip);
         Assert.AreEqual("2 Players Joined", snapshot.Presence.Details);
         Assert.AreEqual("Waiting", snapshot.Presence.State);
     }

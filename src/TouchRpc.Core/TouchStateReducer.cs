@@ -6,8 +6,6 @@ public sealed class TouchStateReducer
     private readonly LocalRole _configuredRole;
     private readonly IMonotonicClock _clock;
     private readonly TimeSpan _afkThreshold;
-    private readonly string? _manualNickname;
-    private string? _manualNicknameRoleId;
     private long? _afkStartedAt;
     private string? _observedLocalRoleId;
     private string? _automaticNickname;
@@ -19,9 +17,7 @@ public sealed class TouchStateReducer
         string? localRoleId = null,
         LocalRole configuredRole = LocalRole.Unknown,
         IMonotonicClock? clock = null,
-        TimeSpan? afkThreshold = null,
-        string? manualNickname = null,
-        string? manualNicknameRoleId = null)
+        TimeSpan? afkThreshold = null)
     {
         if (localRoleId is not null && !RoleId.IsValid(localRoleId))
             throw new ArgumentException("Local role ID must contain digits only.", nameof(localRoleId));
@@ -30,10 +26,6 @@ public sealed class TouchStateReducer
         _configuredRole = configuredRole;
         _clock = clock ?? SystemMonotonicClock.Instance;
         _afkThreshold = afkThreshold ?? AfkPolicy.DefaultThreshold;
-        _manualNickname = string.IsNullOrWhiteSpace(manualNickname) ? null : manualNickname.Trim();
-        _manualNicknameRoleId = manualNicknameRoleId is not null && RoleId.IsValid(manualNicknameRoleId)
-            ? manualNicknameRoleId
-            : null;
         if (_afkThreshold <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(afkThreshold), "AFK threshold must be positive.");
         State = new TouchState();
@@ -123,7 +115,6 @@ public sealed class TouchStateReducer
         _observedLocalRoleId = roleId;
         State.LocalRoleId = roleId;
         State.LocalRoleIdEvidence = EvidenceKind.Observed;
-        if (_manualNickname is not null && _manualNicknameRoleId is null) _manualNicknameRoleId = roleId;
     }
 
     private void ApplyLocalNickname(LocalNicknameObserved nickname)
@@ -141,9 +132,7 @@ public sealed class TouchStateReducer
         var nickname = NicknamePolicy.Select(
             State.LocalRoleId,
             _automaticNickname,
-            _automaticNicknameRoleId,
-            _manualNickname,
-            _manualNicknameRoleId);
+            _automaticNicknameRoleId);
         State.LocalNickname = nickname.LocalNickname;
         State.NicknameSource = nickname.Source;
         State.NicknameTooltip = nickname.Tooltip;

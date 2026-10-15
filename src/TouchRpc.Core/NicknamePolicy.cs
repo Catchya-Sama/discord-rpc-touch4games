@@ -12,9 +12,7 @@ public static class NicknamePolicy
     public static NicknameView Select(
         string? localRoleId,
         string? automaticNickname,
-        string? automaticNicknameRoleId,
-        string? manualNickname,
-        string? manualNicknameRoleId)
+        string? automaticNicknameRoleId)
     {
         string? nickname = null;
         var source = NicknameSource.GeneralFallback;
@@ -26,26 +24,6 @@ public static class NicknamePolicy
             source = NicknameSource.AutomaticVerified;
             diagnostic = NicknameDiagnostic.None;
         }
-        else if (!string.IsNullOrWhiteSpace(manualNickname))
-        {
-            if (manualNicknameRoleId is null)
-            {
-                nickname = manualNickname.Trim();
-                source = NicknameSource.Manual;
-                diagnostic = NicknameDiagnostic.ManualUnbound;
-            }
-            else if (MatchesIdentity(localRoleId, manualNicknameRoleId))
-            {
-                nickname = manualNickname.Trim();
-                source = NicknameSource.Manual;
-                diagnostic = NicknameDiagnostic.AutomaticUnavailable;
-            }
-            else
-            {
-                diagnostic = NicknameDiagnostic.ManualIdentityMismatch;
-            }
-        }
-
         if (nickname is null) return new NicknameView(null, source, GeneralTooltip, diagnostic);
 
         var textElements = CountTextElements(nickname);

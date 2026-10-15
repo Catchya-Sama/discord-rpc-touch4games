@@ -1,0 +1,43 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore TouchRpc.slnx
+
+      - name: Verify formatting
+        run: dotnet format TouchRpc.slnx --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build TouchRpc.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test TouchRpc.slnx --configuration Release --no-build
+
+      - name: Publish portable Windows package
+        shell: pwsh
+        run: ./scripts/Publish-Release.ps1
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TouchRpc-win-x64
+          path: artifacts/TouchRpc-win-x64.zip
+          if-no-files-found: error
