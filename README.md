@@ -1,6 +1,6 @@
 # TOUCH RPC
-Tanggal keputusan: 15 Oktober 2026. Implementasi lokal P3 tersedia:
-Core parser, live log reader, path detection/fallback Browse, lifecycle AFK monotonic, settings lokal, dan preview Windows. Verifikasi live dengan game masih pending.
+Tanggal keputusan: 15 Oktober 2026. Implementasi lokal P4 tersedia:
+Core parser, live log reader, path detection/fallback Browse, lifecycle AFK monotonic, settings lokal, preview Windows dan Discord Rich Presence adapter. Verifikasi live Discord masih pending Application ID/aset proyek.
 
 Project Owner: Bongbong (xooty).
 Target: Software pendamping Windows, C# .NET, sumber data log local file TOUCH, keluaran Discord Rich Presence.
@@ -21,7 +21,7 @@ AGENTS.md → docs/01-SPEC.md → docs/02-LOG-EVIDENCE.md → docs/03-ARCHITECTU
 
 ## Input yang belum tersedia
 - Pilihan license project ; ga boleh menambahkan license tanpa keputusan owner.
-- Discord Application ID, nama software final, image dan asset key.
+- Discord Application ID, nama software final, image dan asset key untuk live verification. Nilai tidak di-hard-code; masukkan melalui settings lokal.
 - Deteksi role ID local untuk pengguna belum ada .
 
 
@@ -53,7 +53,7 @@ Console hanya menampilkan state akhir dan diagnostik terpilih. Console tidak men
 
 Console replay tetap tersedia untuk diagnosis offline. History log tidak dipakai untuk mengarang durasi AFK; timer replay dimulai dari monitoring dengan diagnostic eksplisit.
 
-## Menjalankan preview Windows P3
+## Menjalankan preview Windows P4
 ```powershell
 & "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" run --project src/TouchRpc.App -c Release
 ```
@@ -64,6 +64,7 @@ Alur penggunaan:
 3. Isi Character Role ID hanya bila diperlukan; launcher userid bukan character roleid. Biarkan kosong jika belum diketahui.
 4. Gunakan role calibration hanya jika bukti role dari log tidak lengkap.
 5. Klik **Start monitoring** dan periksa Source Health serta Presence Preview.
+6. Untuk Discord, isi public Application ID dan optional large image asset key. Jangan masukkan Client Secret atau token.
 
 AFK berarti 30 menit berada di room tanpa mulai bermain sebagai peserta Joined. Ini bukan deteksi input Windows. Spectator tetap menghitung selama gameplay/results; ready, chat, aktivitas anggota lain, host transfer, slot changes, dan role switch tidak mereset timer. Joined yang mulai bermain membatalkan AFK dan interval baru dimulai saat kembali ke WaitRoom.
 
@@ -71,6 +72,6 @@ Preview menampilkan elapsed AFK, origin timer, dan diagnostic. Jika monitoring d
 
 Settings disimpan di `%LocalAppData%\TouchRpc\settings.json`, bukan di repository atau folder game. Raw log hanya dibaca dan tidak disalin.
 
-P3 belum mencakup tray atau Discord. Status Discord di preview sengaja tetap `Disabled (P4)`.
+Tanpa Application ID, status Discord tetap `Disabled` dan preview berfungsi normal. Dengan konfigurasi valid, adapter mengirim Details/State serta large-image tooltip nickname, melakukan deduplication, memulihkan latest state setelah reconnect, dan clear saat Stop/game exit. Tray dan packaging tetap belum termasuk P4.
 
 Yayyy itu step awal nya gengggg. kalo bisa yaudah

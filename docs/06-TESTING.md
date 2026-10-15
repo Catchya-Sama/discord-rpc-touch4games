@@ -109,3 +109,33 @@ Hasil acceptance 15 Oktober 2026: pengguna mengonfirmasi phase/status, role, ros
 
 ## Pemeriksaan nickname P3
 Gunakan fixture sintetis; raw log dan nickname pengguna tidak masuk repository. Test mencakup self identity eksplisit, penolakan `ElsePlayerName`, precedence otomatis/manual/fallback, binding manual, pergantian account/session, keluar room, Unicode, batas tooltip dan regresi status/roster/AFK. Log live saat ini hanya membuktikan self role ID, belum nickname otomatis. Pada P4, verifikasi `assets.large_text` dengan hover logo Discord; jangan tandai pass dari preview P3.
+
+## Pemeriksaan P4
+Automated tests memakai fake transport dan menguji:
+- Application ID kosong tidak membuat transport dan tidak menghalangi preview;
+- payload identik dikirim satu kali;
+- perubahan cepat sebelum connect hanya menerbitkan latest state;
+- disconnect/reconnect menerbitkan latest state tanpa backlog;
+- clear menghapus pending/latest state dan mencegah republish setelah reconnect;
+- Details, State, asset key dan kandidat nickname tooltip dipetakan tanpa role ID/roster list/raw log;
+- status Connected/Disconnected/Error terpisah dari source health;
+- initial connection failure tetap dapat pulih pada reconnect;
+- settings Discord dinormalisasi dan settings lama tetap dapat dimuat.
+
+### Prasyarat live P4
+1. Buat/pilih Discord Application di Developer Portal.
+2. Salin public Application ID ke UI. Jangan masukkan Client Secret atau token.
+3. Optional untuk pengujian tooltip: upload satu Rich Presence art asset dan masukkan asset key persis ke kolom Large image asset key.
+4. Gunakan Discord desktop, login, dan pastikan activity status/sharing tidak dinonaktifkan.
+
+### Protokol live P4 pengguna
+1. Urutan startup A: buka Discord desktop terlebih dahulu, lalu preview TOUCH RPC. Isi Application ID/asset key, pilih log dan Start monitoring. Expected: status `Connected`, activity muncul, Details/State sama dengan preview.
+2. Hover large image. Expected: tooltip memakai nickname manual/verified; fallback adalah `TOUCH`. Jika asset key kosong atau belum tersedia di application, large image/hover memang tidak tampil.
+3. Uji Lobby → Waiting → Smashing Key → Spectating/AFK yang tersedia. Catat waktu preview berubah dan waktu Discord terlihat berubah; target observasi 2–5 detik.
+4. Tutup Discord saat monitoring. Expected: status menjadi Disconnected. Ubah state game bila memungkinkan, buka Discord kembali, dan pastikan hanya state terbaru yang muncul.
+5. Urutan startup B: jalankan preview dan Start monitoring ketika Discord tertutup, lalu buka Discord. Expected: reconnect dan latest state saja yang muncul.
+6. Klik Stop. Expected: Rich Presence dibersihkan. Start kembali harus menerbitkan state terbaru, bukan state sebelum Stop.
+7. Bila monitoring mengikuti proses, tutup TOUCH. Expected: source `GameClosed` dan Rich Presence dibersihkan. Buka TOUCH kembali; expected session baru dan latest presence setelah log tersedia.
+8. Kirim hasil status/Details/State/tooltip dan waktu observasi saja. Jangan kirim settings.json, raw log, Application Client Secret atau token.
+
+Live Discord IPC, hover asset, restart Discord dan target 2–5 detik tetap pending sampai diuji dengan Application ID/aset proyek yang valid.

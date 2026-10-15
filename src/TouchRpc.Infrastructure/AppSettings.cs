@@ -9,7 +9,9 @@ public sealed record AppSettings(
     LocalRole ConfiguredRole = LocalRole.Unknown,
     int AfkThresholdMinutes = 30,
     string? ManualNickname = null,
-    string? ManualNicknameRoleId = null);
+    string? ManualNicknameRoleId = null,
+    string? DiscordApplicationId = null,
+    string? DiscordLargeImageKey = null);
 
 public sealed class AppSettingsStore
 {
@@ -71,6 +73,11 @@ public sealed class AppSettingsStore
             ? null
             : settings.ManualNickname.Trim();
         if (manualNicknameRoleId is null) manualNickname = null;
+        var discordApplicationId = NormalizeDiscordApplicationId(settings.DiscordApplicationId);
+        var discordLargeImageKey = string.IsNullOrWhiteSpace(settings.DiscordLargeImageKey)
+            ? null
+            : settings.DiscordLargeImageKey.Trim();
+        if (discordLargeImageKey?.Length > 256) discordLargeImageKey = discordLargeImageKey[..256];
         return settings with
         {
             LogPath = path,
@@ -78,6 +85,15 @@ public sealed class AppSettingsStore
             AfkThresholdMinutes = thresholdMinutes,
             ManualNickname = manualNickname,
             ManualNicknameRoleId = manualNicknameRoleId,
+            DiscordApplicationId = discordApplicationId,
+            DiscordLargeImageKey = discordLargeImageKey,
         };
+    }
+
+    public static string? NormalizeDiscordApplicationId(string? applicationId)
+    {
+        if (string.IsNullOrWhiteSpace(applicationId)) return null;
+        var normalized = applicationId.Trim();
+        return normalized.All(char.IsAsciiDigit) && ulong.TryParse(normalized, out _) ? normalized : null;
     }
 }

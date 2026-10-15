@@ -10,6 +10,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
 {
     private readonly AppSettingsStore _settingsStore = new();
     private readonly TouchProcessDetector _processDetector = new();
+    private DiscordPresenceService? _discord;
     private CancellationTokenSource? _monitorCancellation;
     private MonitoringSession? _session;
     private string _logPath = string.Empty;
@@ -31,6 +32,9 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private string _diagnostic = "None";
     private string _afk = "Not tracking";
     private string _nickname = "TOUCH · GeneralFallback · AutomaticUnavailable";
+    private string _discordApplicationId = string.Empty;
+    private string _discordLargeImageKey = string.Empty;
+    private string _discordStatus = "Disabled";
     private int _afkThresholdMinutes = 30;
 
     public ObservableCollection<TouchProcessCandidate> ProcessCandidates { get; } = [];
@@ -59,6 +63,18 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             _manualNicknameRoleId = null;
             _manualNicknameAwaitingBinding = !string.IsNullOrWhiteSpace(value);
         }
+    }
+
+    public string DiscordApplicationId
+    {
+        get => _discordApplicationId;
+        set => SetProperty(ref _discordApplicationId, value);
+    }
+
+    public string DiscordLargeImageKey
+    {
+        get => _discordLargeImageKey;
+        set => SetProperty(ref _discordLargeImageKey, value);
     }
 
     public LocalRole ConfiguredRole
@@ -110,7 +126,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public string Diagnostic { get => _diagnostic; private set => SetProperty(ref _diagnostic, value); }
     public string Afk { get => _afk; private set => SetProperty(ref _afk, value); }
     public string Nickname { get => _nickname; private set => SetProperty(ref _nickname, value); }
-    public string DiscordStatus => "Disabled (P4)";
+    public string DiscordStatus { get => _discordStatus; private set => SetProperty(ref _discordStatus, value); }
 
     public async Task InitializeAsync()
     {
@@ -121,8 +137,11 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         _afkThresholdMinutes = settings.AfkThresholdMinutes;
         _manualNickname = settings.ManualNickname ?? string.Empty;
         _manualNicknameRoleId = settings.ManualNicknameRoleId;
+        DiscordApplicationId = settings.DiscordApplicationId ?? string.Empty;
+        DiscordLargeImageKey = settings.DiscordLargeImageKey ?? string.Empty;
         _manualNicknameAwaitingBinding = false;
         OnPropertyChanged(nameof(ManualNickname));
+        ConfigureDiscord();
         DetectProcesses();
     }
 
@@ -164,6 +183,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         }
 
         await SaveSettingsAsync(roleId);
+        ConfigureDiscord();
         _session = new MonitoringSession(
             LogPath.Trim(),
             roleId,
@@ -186,12 +206,19 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         _session = null;
         _followProcessLifecycle = false;
         IsMonitoring = false;
+        _discord?.Clear();
         SourceDiagnostic = "Monitoring stopped. Preview retained for inspection.";
     }
 
     public async ValueTask DisposeAsync()
     {
         Stop();
+        if (_discord is not null)
+        {
+            _discord.StatusChanged -= Discord_StatusChanged;
+            _discord.Dispose();
+            _discord = null;
+        }
         await Task.CompletedTask;
     }
 
@@ -204,6 +231,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                 if (_followProcessLifecycle && SelectedProcess is not null && !IsProcessRunning(SelectedProcess.ProcessId))
                 {
                     _ = ApplySnapshot(_session.ClearForGameClosed());
+                    _discord?.Clear();
                     SelectedProcess = null;
                 }
 
@@ -263,6 +291,14 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             : "Not tracking";
         Nickname = $"Name: {snapshot.LocalNickname ?? "Unavailable"} · Source: {snapshot.NicknameSource} · " +
             $"Tooltip: {snapshot.NicknameTooltip} · {snapshot.NicknameDiagnostic}";
+        if (snapshot.SourceHealth != LogSourceHealth.GameClosed)
+        {
+            _discord?.Publish(new DiscordPresencePayload(
+                snapshot.Presence.Details,
+                string.IsNullOrWhiteSpace(snapshot.Presence.State) ? null : snapshot.Presence.State,
+                string.IsNullOrWhiteSpace(DiscordLargeImageKey) ? null : DiscordLargeImageKey.Trim(),
+                snapshot.NicknameTooltip));
+        }
         if (_manualNicknameAwaitingBinding && !string.IsNullOrWhiteSpace(ManualNickname) && snapshot.LocalRoleId is not null)
         {
             _manualNicknameRoleId = snapshot.LocalRoleId;
@@ -278,7 +314,31 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         ConfiguredRole,
         _afkThresholdMinutes,
         string.IsNullOrWhiteSpace(ManualNickname) ? null : ManualNickname,
-        _manualNicknameRoleId));
+        _manualNicknameRoleId,
+        DiscordApplicationId,
+        DiscordLargeImageKey));
+
+    private void ConfigureDiscord()
+    {
+        if (_discord is not null)
+        {
+            _discord.StatusChanged -= Discord_StatusChanged;
+            _discord.Dispose();
+        }
+
+        var applicationId = AppSettingsStore.NormalizeDiscordApplicationId(DiscordApplicationId);
+        _discord = new DiscordPresenceService(applicationId);
+        _discord.StatusChanged += Discord_StatusChanged;
+        DiscordStatus = $"{_discord.State} · {_discord.Diagnostic}";
+        if (applicationId is null && !string.IsNullOrWhiteSpace(DiscordApplicationId))
+            DiscordStatus = "Error · Application ID must contain digits only.";
+    }
+
+    private void Discord_StatusChanged(object? sender, DiscordStatusChangedEventArgs eventArgs)
+    {
+        System.Windows.Application.Current.Dispatcher.BeginInvoke(() =>
+            DiscordStatus = $"{eventArgs.State} · {eventArgs.Diagnostic}");
+    }
 
     private static bool IsProcessRunning(int processId)
     {

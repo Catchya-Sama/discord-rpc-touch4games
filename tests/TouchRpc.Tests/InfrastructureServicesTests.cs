@@ -29,7 +29,9 @@ public sealed class InfrastructureServicesTests
             LocalRole.Spectator,
             45,
             "Synthetic Nickname",
-            "10000000001");
+            "10000000001",
+            "123456789012345678",
+            "touch-logo");
 
         await store.SaveAsync(expected);
         var actual = await store.LoadAsync();
@@ -75,6 +77,25 @@ public sealed class InfrastructureServicesTests
 
         Assert.IsNull(actual.ManualNickname);
         Assert.IsNull(actual.ManualNicknameRoleId);
+    }
+
+    [TestMethod]
+    public async Task SettingsStore_NormalizesDiscordConfiguration()
+    {
+        using var temporary = new TemporaryDirectory();
+        var path = Path.Combine(temporary.Path, "settings.json");
+        var store = new AppSettingsStore(path);
+
+        await store.SaveAsync(new AppSettings(
+            DiscordApplicationId: " 123456789012345678 ",
+            DiscordLargeImageKey: " touch-logo "));
+        var valid = await store.LoadAsync();
+        await store.SaveAsync(new AppSettings(DiscordApplicationId: "not-an-id"));
+        var invalid = await store.LoadAsync();
+
+        Assert.AreEqual("123456789012345678", valid.DiscordApplicationId);
+        Assert.AreEqual("touch-logo", valid.DiscordLargeImageKey);
+        Assert.IsNull(invalid.DiscordApplicationId);
     }
 
     [TestMethod]

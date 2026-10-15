@@ -10,7 +10,7 @@ Struktur yang dituju (boleh sederhanakan jumlah project sesuai fase):
 - tests/TouchRpc.Tests: synthetic fixtures, replay dan unit tests bermakna.
 - docs: spesifikasi dan progres.
 
-Struktur aktual P3 terdiri dari `TouchRpc.Core`, `TouchRpc.Infrastructure`, `TouchRpc.Replay`, `TouchRpc.App`, dan `TouchRpc.Tests`. Core dan Infrastructure tidak memiliki package runtime pihak ketiga. App menggunakan WPF bawaan Windows/.NET. Test menggunakan MSTest 4.0.2 dari template SDK .NET 10.
+Struktur aktual P4 terdiri dari `TouchRpc.Core`, `TouchRpc.Infrastructure`, `TouchRpc.Replay`, `TouchRpc.App`, dan `TouchRpc.Tests`. Core tetap bebas dependency Discord. Infrastructure memakai `DiscordRichPresence` 1.6.1.70 dan transitif `Newtonsoft.Json` 13.0.1; App menggunakan WPF bawaan Windows/.NET. Test menggunakan MSTest 4.0.2 dari template SDK .NET 10.
 
 Replay menerima path file, character role ID manual opsional, dan kalibrasi role opsional. Output dibatasi ke presence final, phase, role/evidence, roster completeness dan diagnostic code; raw line dan daftar ID tidak dicetak.
 
@@ -61,6 +61,12 @@ Satu Application ID proyek dapat dipakai distribusi umum; public ID bukan secret
 Evaluasi library C# / binding SDK resmi berdasarkan dukungan, lisensi, maintenance dan kompatibilitas. Laporkan keputusan/versi sebelum mengunci dependency; jangan gunakan library deprecated tanpa alasan.
 Set Details/State/assets; N sebagai teks, jangan pakai party capacity fiktif. Deduplicate payload, coalesce bursts, patuhi rate limits library/platform, retry bounded/backoff. Reconnect kirim latest state saja, bukan backlog.
 Clear saat game exit atau stop. Pengguna harus membuka Discord desktop dan mengaktifkan activity sharing. Target visible update 2–5 detik adalah acceptance target, bukan garansi.
+
+Implementasi P4 memilih package managed `DiscordRichPresence` 1.6.1.70 (MIT), bukan pre-release. Package menyediakan named-pipe IPC dan automatic reconnect tanpa native installer tambahan. `DiscordPresenceService` membungkus transport agar App/Core tidak bergantung langsung pada tipe library dan tests dapat memakai fake transport.
+
+Service menyimpan satu latest payload, melakukan deduplication, dan baru mengirim ulang setelah event Discord `Ready`. Disconnect menghapus status sent lokal tetapi mempertahankan latest payload; reconnect mengirim latest saja. Clear menghapus latest payload sehingga reconnect setelah stop/game exit tidak menghidupkan presence lama.
+
+Application ID dan large image asset key disimpan dalam settings LocalAppData. Application ID divalidasi digits/UInt64; asset key di-trim dan dibatasi 256 karakter. Hanya public Application ID yang diperlukan. Client Secret/token tidak digunakan atau disimpan.
 
 Referensi resmi untuk diperiksa Cline saat implementasi:
 https://discord.com/developers/applications

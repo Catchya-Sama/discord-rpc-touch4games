@@ -8,7 +8,7 @@
 - Path detection dan role ID otomatis belum diuji untuk pengguna lain.
 
 ## Fase aktif berikutnya
-P3 nickname preparation: status/roster/AFK dipertahankan, identitas nickname dan kandidat tooltip disiapkan untuk P4. Jangan mulai adapter Discord dalam fase ini.
+P4 Discord adapter: implementasi lokal selesai; live IPC/hover/reconnect/latency menunggu Application ID dan asset key proyek yang valid.
 
 ## 15 Oktober 2026 / P0 / main
 Perubahan:
@@ -174,6 +174,36 @@ Live acceptance pengguna:
 - Nickname dan character role ID pribadi hanya digunakan pada settings lokal; nilainya tidak dicatat atau di-hard-code di repository.
 - Boundary AFK 30 menit tidak dijalankan live. Acceptance AFK didasarkan pada automated clock tests; status pengujian live boundary tetap `not run`, bukan `pass`.
 - P3 diterima pengguna dengan keterbatasan tersebut. Deteksi nickname otomatis dan hover/pengiriman tooltip Discord tetap pending P4.
+
+## 15 Oktober 2026 / P4 Discord adapter / main
+Perubahan:
+- Ditambahkan adapter Discord terisolasi di Infrastructure dengan package `DiscordRichPresence` 1.6.1.70 (MIT); Core tetap tidak bergantung Discord.
+- Settings/UI menerima public Application ID dan optional large image asset key. Preview tetap berfungsi saat konfigurasi kosong atau Discord tidak tersedia.
+- Payload hanya memuat Details, State, asset key dan nickname tooltip; tidak ada party capacity, role ID, daftar/nama anggota, raw log, token atau Client Secret.
+- Service menyimpan latest payload, deduplicate nilai identik, menunggu Discord Ready, dan hanya mengirim latest state setelah reconnect.
+- Stop monitoring, game exit dan app disposal membersihkan presence serta pending state.
+
+Keputusan + alasan:
+- Stable 1.6.1.70 dipilih daripada versi pre-release. Target net9.0 package kompatibel dengan net10.0 proyek dan tidak memerlukan native installer.
+- Application ID tidak di-hard-code karena ID/aset final belum diberikan. Public ID disimpan di LocalAppData; secret/token tidak dibutuhkan.
+- Live Discord tidak diklaim pass dari fake transport atau WPF smoke test.
+
+Pemeriksaan dijalankan dan hasil:
+- Restore package, formatter verification dan Release build lulus.
+- Automated tests: 80 passed, 0 failed, 0 skipped.
+- Tests baru mencakup disabled mode, mapping tooltip, deduplication, latest-only reconnect, clear, status/error dan recovery initial connection failure.
+- WPF smoke launch tanpa Application ID lulus; Discord disabled tidak menghalangi startup aplikasi.
+
+Live verification: pending — belum ada Application ID/asset key proyek untuk menguji Discord desktop, hover `assets.large_text`, dua urutan startup, restart Discord, clear nyata dan target visible update 2–5 detik.
+
+Risiko atau unknown:
+- Asset key harus cocok dengan asset pada Discord Application yang sama; tanpa asset, tooltip large image tidak dapat diamati.
+- Visibilitas activity bergantung Discord desktop/login dan pengaturan activity sharing pengguna.
+- Library adalah dependency komunitas MIT, bukan SDK resmi Discord; dibungkus interface agar dapat diganti tanpa mengubah Core.
+
+Push status: dicatat pada laporan fase setelah commit/push.
+
+Langkah berikutnya: pengguna menyediakan/memasukkan public Application ID dan asset key, lalu menjalankan protokol live P4. Jangan mulai P5 sebelum hasil review P4.
 
 ## Format update fase
 Tanggal / fase / branch:

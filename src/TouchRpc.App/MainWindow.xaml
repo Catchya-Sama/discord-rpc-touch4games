@@ -16,7 +16,7 @@
 
             <StackPanel Grid.Row="0" Margin="0,0,0,16">
                 <TextBlock Text="TOUCH RPC" FontSize="28" FontWeight="Bold" />
-                <TextBlock Text="P3 live preview with 30-minute AFK lifecycle · Discord remains disabled" Foreground="#FF5F6470" />
+                <TextBlock Text="P4 live preview with local Discord Rich Presence" Foreground="#FF5F6470" />
             </StackPanel>
 
             <Border Grid.Row="1" Background="{StaticResource CardBackground}" CornerRadius="12" Padding="20" Margin="0,0,0,16">
@@ -72,7 +72,12 @@
                         <TextBlock Text="{Binding SourceHealth}" Foreground="{StaticResource PrimaryBrush}" />
                         <TextBlock Text="{Binding SourceDiagnostic}" TextWrapping="Wrap" Margin="0,4,0,12" />
                         <TextBlock Text="Discord" FontWeight="SemiBold" />
-                        <TextBlock Text="{Binding DiscordStatus}" Foreground="#FF777777" />
+                        <TextBlock Text="{Binding DiscordStatus}" Foreground="#FF777777" TextWrapping="Wrap" />
+                        <TextBlock Text="Application ID" Margin="0,12,0,0" />
+                        <TextBox Text="{Binding DiscordApplicationId, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanStart}" />
+                        <TextBlock Text="Public project ID only; no token or Client Secret." Foreground="#FF5F6470" TextWrapping="Wrap" />
+                        <TextBlock Text="Large image asset key (optional)" Margin="0,12,0,0" />
+                        <TextBox Text="{Binding DiscordLargeImageKey, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanStart}" />
                     </StackPanel>
                 </Border>
             </Grid>
