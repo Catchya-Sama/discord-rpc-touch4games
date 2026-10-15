@@ -8,7 +8,7 @@
 - Path detection dan role ID otomatis belum diuji untuk pengguna lain.
 
 ## Fase aktif berikutnya
-P0: bootstrap repo/dokumentasi sedang dilaksanakan. Setelah review P0, fase berikutnya adalah P1 offline parser; jangan mulai seluruh roadmap sekaligus.
+P1: Core parser dan offline replay sedang dilaksanakan setelah P0 diterima pemilik. Jangan mulai P2 sebelum hasil P1 direview.
 
 ## 15 Oktober 2026 / P0 / main
 Perubahan:
@@ -38,6 +38,37 @@ Risiko atau unknown:
 Push status: dicatat pada laporan fase setelah commit/push; tidak menulis hash commit ke commit yang sama.
 
 Langkah berikutnya: review hasil P0. Jangan mulai P1 sampai pemilik menerima fase ini.
+
+## 15 Oktober 2026 / P1 / main
+Perubahan:
+- Perubahan pengguna yang sudah ada di remote di-fast-forward sebelum implementasi dan dipertahankan.
+- SDK .NET 10.0.402 dipasang user-local; solution dikunci dengan `global.json`.
+- Ditambahkan Core typed events, parser pola terdokumentasi, reducer state, roster berbasis ID unik, role inference terbatas, formatter presence dan unknown fallback.
+- Ditambahkan console replay offline yang menerima path, role ID manual opsional dan kalibrasi role opsional tanpa mencetak raw log atau daftar ID.
+- Ditambahkan fixture sintetis dan automated tests untuk alur acceptance P1.
+
+Keputusan + alasan:
+- Core tidak memakai dependency runtime pihak ketiga agar state logic tetap terisolasi. MSTest 4.0.2 digunakan dari template SDK resmi.
+- Snapshot replay dianggap selesai pada world room yang dikenal hanya sebagai inferensi prototipe. Tanpa rangkaian entry lengkap, roster tetap partial dan count disembunyikan.
+- Character role ID lokal tidak dideteksi dari launcher userid atau anggota pertama; P1 menerima input manual opsional dan default tetap kosong.
+- AFK, live reader, WPF, tray dan Discord tidak dimasukkan karena berada di fase berikutnya.
+
+Pemeriksaan dijalankan dan hasil:
+- Restore dan Release build berhasil tanpa warning/error dengan warnings-as-errors.
+- Automated tests: 22 passed, 0 failed, 0 skipped.
+- Console replay dijalankan terhadap fixture sintetis; output hanya berisi state akhir dan diagnostik terpilih.
+- Ignore rules memastikan hanya `*.synthetic.log` di folder fixture test yang dapat dilacak; raw log lain tetap diabaikan.
+
+Live verification: pending — P1 hanya diverifikasi lewat fixture sintetis dan belum membaca log TOUCH secara live.
+
+Risiko atau unknown:
+- Marker akhir snapshot resmi belum terverifikasi; heuristic P1 tidak boleh dianggap universal.
+- Format log bukan API stabil dan live log dapat memiliki variasi yang belum tercakup parser.
+- Role ID manual masih diperlukan untuk membedakan local leave dan konfirmasi role switch secara aman.
+
+Push status: dicatat pada laporan fase setelah commit/push.
+
+Langkah berikutnya: review P1. Jika diterima, rencanakan P2 live reader, path detection dan preview Windows sebagai fase terpisah.
 
 ## Format update fase
 Tanggal / fase / branch:

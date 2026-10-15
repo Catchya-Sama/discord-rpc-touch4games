@@ -1,6 +1,6 @@
 # TOUCH RPC
-Tanggal keputusan: 15 Oktober 2026. Repository ini masih berada pada fase P0
-(bootstrap repository dan dokumentasi); belum ada aplikasi yang dapat dijalankan.
+Tanggal keputusan: 15 Oktober 2026. Repository ini berada pada fase P1:
+Core parser dan console replay offline sudah tersedia untuk fixture sintetis.
 
 Project Owner: Bongbong (xooty).
 Target: Software pendamping Windows, C# .NET, sumber data log local file TOUCH, keluaran Discord Rich Presence.
@@ -26,6 +26,24 @@ AGENTS.md → docs/01-SPEC.md → docs/02-LOG-EVIDENCE.md → docs/03-ARCHITECTU
 
 
 ## Toolchain
-Target implementation P1 dan seterusnya adalah .NET 10 LTS. Mesin bootstrap saat ini hanya memiliki SDK 8.0.408, sehingga SDK .NET 10 dipasang sebelum project aplikasi dibuat. P0 sendiri hanya mengubah dokumentasi dan tidak membutuhkan build.
+Project menargetkan .NET 10 LTS dan dikunci ke SDK 10.0.402 melalui `global.json`.
+
+## Build dan test P1
+```powershell
+dotnet restore TouchRpc.slnx
+dotnet build TouchRpc.slnx -c Release --no-restore
+dotnet test TouchRpc.slnx -c Release --no-build
+```
+
+Replay fixture sintetis:
+```powershell
+dotnet run --project src/TouchRpc.Replay -c Release -- `
+  tests/TouchRpc.Tests/Fixtures/midgame-spectator.synthetic.log `
+  --role-id 10000000001
+```
+
+Console hanya menampilkan state akhir dan diagnostik terpilih. Console tidak mencetak raw line, chat, nama anggota, atau daftar role ID. Parameter `--role joined|spectator` dapat dipakai untuk kalibrasi eksplisit saat bukti role dari log tidak lengkap.
+
+P1 masih offline. Live log reader, path detection, UI, AFK, tray dan Discord belum dibuat.
 
 Yayyy itu step awal nya gengggg. kalo bisa yaudah

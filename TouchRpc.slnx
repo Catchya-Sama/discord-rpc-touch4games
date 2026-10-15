@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TouchRpc.Core/TouchRpc.Core.csproj" />
+    <Project Path="src/TouchRpc.Replay/TouchRpc.Replay.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TouchRpc.Tests/TouchRpc.Tests.csproj" />
+  </Folder>
+</Solution>

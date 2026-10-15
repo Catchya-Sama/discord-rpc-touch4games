@@ -1,0 +1,10 @@
+_OnCmd_RoomEnter_Re
+_OnCmd_RoomDetailInfo_Re
+RoomMemer: 10000000001
+RoomMemer: 10000000002
+RoomMemer: 10000000003
+AddPlayer roleid = 10000000002
+AddPlayer roleid = 10000000002
+AddPlayer
+oper = 12
+the_current_world Type=WaitRoom

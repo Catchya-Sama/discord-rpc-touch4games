@@ -1,6 +1,6 @@
 # Arsitektur implementasi
 
-Baseline yang dipilih pada 15 Oktober 2026: C#/.NET 10 LTS untuk P1 dan fase berikutnya. Menurut kebijakan dukungan resmi Microsoft yang diperiksa saat P0, .NET 10 berada dalam active support sampai 14 November 2028, sedangkan .NET 8 berada dalam maintenance dan berakhir 10 November 2026. Mesin bootstrap baru memiliki SDK 8.0.408; pasang SDK .NET 10 sebelum membuat solution/project pada P1. P0 tidak membuat `global.json` yang menunjuk SDK yang belum tersedia.
+Baseline yang dipilih pada 15 Oktober 2026: C#/.NET 10 LTS untuk P1 dan fase berikutnya. Menurut kebijakan dukungan resmi Microsoft yang diperiksa saat P0, .NET 10 berada dalam active support sampai 14 November 2028, sedangkan .NET 8 berada dalam maintenance dan berakhir 10 November 2026. P1 menggunakan SDK 10.0.402 dan `global.json` dengan roll-forward patch saja.
 Windows UI: WPF untuk settings, preview dan tray (tray adapter terisolasi). Core tidak bergantung WPF atau Discord.
 
 Struktur yang dituju (boleh sederhanakan jumlah project sesuai fase):
@@ -9,6 +9,10 @@ Struktur yang dituju (boleh sederhanakan jumlah project sesuai fase):
 - src/TouchRpc.App: Windows settings/diagnostics/tray.
 - tests/TouchRpc.Tests: synthetic fixtures, replay dan unit tests bermakna.
 - docs: spesifikasi dan progres.
+
+Struktur aktual P1 menyederhanakan target tersebut menjadi `TouchRpc.Core`, `TouchRpc.Replay`, dan `TouchRpc.Tests`. Infrastructure dan App belum dibuat karena live reader, Windows UI dan Discord berada pada fase berikutnya. Core tidak memiliki package runtime pihak ketiga. Test menggunakan MSTest 4.0.2 dari template SDK .NET 10.
+
+Replay menerima path file, character role ID manual opsional, dan kalibrasi role opsional. Output dibatasi ke presence final, phase, role/evidence, roster completeness dan diagnostic code; raw line dan daftar ID tidak dicetak.
 
 Pipeline: log tail → line assembler → parser → typed events → state reducer → presence model → preview/Discord.
 

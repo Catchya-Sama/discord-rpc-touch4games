@@ -1,0 +1,10 @@
+_OnCmd_RoomEnter_Re
+_OnCmd_RoomDetailInfo_Re
+RoomMemer: 10000000001
+RoomMemer: 10000000002
+the_current_world Type=WaitRoom
+SwitchRoleType
+oper = 1 roleid = 10000000001
+oper = 1 roleid = 10000000001
+SwitchRoleType
+oper = 1 roleid = 10000000001

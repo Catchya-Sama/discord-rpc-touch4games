@@ -1,0 +1,9 @@
+_OnCmd_RoomEnter_Re
+_OnCmd_RoomDetailInfo_Re
+RoomMemer: 10000000001
+RoomMemer: 10000000002
+_OnCmd_GetGameInfoRe stage=2, stage=c
+the_current_world Type=PlayRoom
+StartPlayedTime
+_OnCmd_MusicEnd
+the_current_world Type=WaitRoom

@@ -28,6 +28,11 @@ SwitchRoleType = request; toggle hanya setelah balasan lokal yang cocok dalam ko
 Perubahan anggota remote oper=1 tidak otomatis berarti toggle role remote; fase ini menghitung semua anggota sehingga tidak perlu role remote.
 Role awal tidak dapat dipastikan bila log mulai di tengah sesi/tidak lengkap. Tampilkan unknown atau minta kalibrasi role eksplisit melalui UI; jangan terus menampilkan status palsu.
 
+## Batas parser P1
+Parser P1 hanya mengenali pola yang tercantum di dokumen ini dan mengabaikan baris lain. Untuk replay prototipe, snapshot dianggap selesai ketika rangkaian `RoomDetailInfo` mencapai world room yang dikenal (`WaitRoom` atau `PlayRoom`). Ini adalah inferensi implementasi untuk fixture sintetis, bukan marker akhir snapshot resmi dari TOUCH. Jika rangkaian entry terpotong atau detail room tidak terlihat, roster tetap partial dan jumlah tidak ditampilkan.
+
+`_OnCmd_RoomLeave_Re id: ID` diperlakukan sebagai keluar anggota. Jika ID cocok dengan character role ID lokal yang dikonfigurasi manual, seluruh state room dibersihkan; ID lain hanya dihapus dari roster unik.
+
 ## Contoh rangkaian terverifikasi
 2026-10-15 13:25:31 masuk langsung PlayRoom sebagai spectator (konfirmasi pengguna).
 13:29:01 MusicEnd → 13:29:21 WaitRoom (tetap spectator) → 13:29:58 SwitchRoleType + balasan lokal (Join, konfirmasi pengguna).

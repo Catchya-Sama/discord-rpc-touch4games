@@ -13,6 +13,7 @@ coverage/
 # Raw logs, dumps and local/private configuration
 output_log*.txt
 *.log
+!tests/TouchRpc.Tests/Fixtures/*.synthetic.log
 *.dmp
 .DS_Store
 Thumbs.db

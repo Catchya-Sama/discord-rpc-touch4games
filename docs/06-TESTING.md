@@ -31,3 +31,16 @@ Catat waktu event diketahui + waktu preview + waktu terlihat Discord untuk beber
 
 ## Protokol uji pengguna
 Cline beri daftar satu fase, langkah, expected result, dan cara mengirim hasil diagnostik teredaksi. Pengguna dapat menyediakan log asli secara privat untuk investigasi, jangan commit.
+
+## Pemeriksaan P1
+Jalankan dari root repository dengan SDK yang dipilih `global.json`:
+
+```powershell
+dotnet restore TouchRpc.slnx
+dotnet build TouchRpc.slnx -c Release --no-restore
+dotnet test TouchRpc.slnx -c Release --no-build
+```
+
+Fixture yang boleh masuk Git harus berada di `tests/TouchRpc.Tests/Fixtures` dan berakhiran `.synthetic.log`. Semua ID dan urutan di fixture tersebut sintetis. Aturan umum `*.log` tetap mengabaikan log lain.
+
+P1 menguji parser pola terdokumentasi, pending entry, midgame spectator, role switch yang dikonfirmasi, duplikasi roster, remote/local leave, fallback unknown, singular/plural dan replay deterministik. Hasil fixture tidak dianggap live verification terhadap game.
