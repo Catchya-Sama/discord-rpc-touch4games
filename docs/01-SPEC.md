@@ -32,5 +32,15 @@ Simpan path lokal, pilihan role ID, preferensi tray dan threshold default 30 men
 Jangan wajib admin: jika akses process path gagal, fallback Browse. Tangani beberapa client dengan pilihan eksplisit, jangan mencampur log.
 Status UI: log missing/unreadable/valid waiting/receiving; Discord disabled/connecting/connected/disconnected. Pisahkan keduanya.
 
+## Identitas nickname dan tooltip aset
+- `LocalNickname` adalah nickname karakter pemilik client, bukan nama anggota room pertama, `ElsePlayerName` terakhir, launcher userid, atau nilai hard-coded.
+- Deteksi otomatis hanya sah jika nickname dapat dipetakan eksplisit ke `LocalRoleId` yang terverifikasi. Kedekatan baris log bukan bukti.
+- Urutan nilai: otomatis terverifikasi → nickname manual yang cocok dengan identitas lokal → tooltip umum `TOUCH`.
+- Preview menampilkan nickname, sumber, kandidat tooltip dan diagnostic. Nilai tidak mengubah Details, State, roster atau AFK.
+- Nickname manual diikat ke character role ID saat identitas tersedia. Binding identitas berbeda tidak dipakai diam-diam; manual yang belum terikat hanya berlaku untuk session monitoring aktif.
+- Nickname otomatis dibersihkan pada session client baru atau pergantian identitas. Keluar room tidak menghapus identitas karakter.
+- Unicode dan kapitalisasi dipertahankan. Kandidat `assets.large_text` P4 disiapkan dalam batas 2–128 text elements; nilai terlalu pendek memakai `TOUCH`, nilai panjang dipotong aman.
+- P3 hanya menyiapkan data/preview. Hover logo Discord dan pengiriman `LargeText` baru diuji pada P4.
+
 ## Non-goals rilis ini
 Mode (ditunda pascarilis), judul musik/artis, difficulty, durasi/countdown, nomor room, kapasitas/lock slots, tombol join/spectate Discord, overlay, distribusi log, telemetry cloud.

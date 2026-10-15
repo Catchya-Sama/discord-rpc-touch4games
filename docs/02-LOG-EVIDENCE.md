@@ -19,6 +19,8 @@ Sumber: pengujian manual pengguna 13–15 Oktober 2026, micro client Windows, Un
 | `AppointMaster`, `oper=21 roleid=ID` | Kandidat transfer host | Tidak diperlukan untuk tampilan fase ini |
 | oper=12 / oper=13 | Unlock / lock satu slot, user-confirmed | ABAIKAN untuk hitungan orang |
 | AddPlayer / DelPlayer tanpa roleid | Muncul pada slot changes | Bukan orang |
+| `formData: ... roleid=ID ... isuserself=True` | Character role ID pemilik client, observed pada log lokal | Bukan launcher userid; parser hanya mengambil ID dan flag, bukan command line/login data |
+| `ElsePlayerName=...` | Nama pemain lain tersedia tanpa pemetaan roleid pada baris yang sama | Jangan dipakai sebagai nickname lokal atau dipasangkan berdasarkan kedekatan baris |
 | oper=17 / oper=18 | Enter/leave mall pada log lain | Bukan room join/leave |
 
 ## Role inference untuk prototipe
@@ -33,6 +35,9 @@ Role awal tidak dapat dipastikan bila log mulai di tengah sesi/tidak lengkap. Ta
 Parser P1 hanya mengenali pola yang tercantum di dokumen ini dan mengabaikan baris lain. Untuk replay prototipe, snapshot dianggap selesai ketika rangkaian `RoomDetailInfo` mencapai world room yang dikenal (`WaitRoom` atau `PlayRoom`). Ini adalah inferensi implementasi untuk fixture sintetis, bukan marker akhir snapshot resmi dari TOUCH. Jika rangkaian entry terpotong atau detail room tidak terlihat, roster tetap partial dan jumlah tidak ditampilkan.
 
 `_OnCmd_RoomLeave_Re id: ID` diperlakukan sebagai keluar anggota. Jika ID cocok dengan character role ID lokal yang dikonfigurasi manual, seluruh state room dibersihkan; ID lain hanya dihapus dari roster unik.
+
+## Bukti nickname lokal P3
+Pemeriksaan read-only pada log aktual menemukan self role ID eksplisit melalui `isuserself=True`, tetapi belum menemukan field nickname yang dipetakan eksplisit ke role ID tersebut. `ElsePlayerName` muncul untuk pemain lain dan tidak boleh dipilih. Karena itu deteksi otomatis nickname belum diklaim berhasil; UI menyediakan manual fallback yang terikat identitas dan default tooltip `TOUCH`.
 
 ## Contoh rangkaian terverifikasi
 2026-10-15 13:25:31 masuk langsung PlayRoom sebagai spectator (konfirmasi pengguna).

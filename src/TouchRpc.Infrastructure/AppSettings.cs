@@ -7,7 +7,9 @@ public sealed record AppSettings(
     string? LogPath = null,
     string? LocalRoleId = null,
     LocalRole ConfiguredRole = LocalRole.Unknown,
-    int AfkThresholdMinutes = 30);
+    int AfkThresholdMinutes = 30,
+    string? ManualNickname = null,
+    string? ManualNicknameRoleId = null);
 
 public sealed class AppSettingsStore
 {
@@ -63,6 +65,19 @@ public sealed class AppSettingsStore
         if (roleId is not null && !RoleId.IsValid(roleId)) roleId = null;
         var path = string.IsNullOrWhiteSpace(settings.LogPath) ? null : settings.LogPath.Trim();
         var thresholdMinutes = settings.AfkThresholdMinutes > 0 ? settings.AfkThresholdMinutes : 30;
-        return settings with { LogPath = path, LocalRoleId = roleId, AfkThresholdMinutes = thresholdMinutes };
+        var manualNicknameRoleId = settings.ManualNicknameRoleId;
+        if (manualNicknameRoleId is not null && !RoleId.IsValid(manualNicknameRoleId)) manualNicknameRoleId = null;
+        var manualNickname = string.IsNullOrWhiteSpace(settings.ManualNickname)
+            ? null
+            : settings.ManualNickname.Trim();
+        if (manualNicknameRoleId is null) manualNickname = null;
+        return settings with
+        {
+            LogPath = path,
+            LocalRoleId = roleId,
+            AfkThresholdMinutes = thresholdMinutes,
+            ManualNickname = manualNickname,
+            ManualNicknameRoleId = manualNicknameRoleId,
+        };
     }
 }

@@ -14,6 +14,9 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private MonitoringSession? _session;
     private string _logPath = string.Empty;
     private string _localRoleId = string.Empty;
+    private string _manualNickname = string.Empty;
+    private string? _manualNicknameRoleId;
+    private bool _manualNicknameAwaitingBinding;
     private LocalRole _configuredRole;
     private TouchProcessCandidate? _selectedProcess;
     private bool _followProcessLifecycle;
@@ -27,6 +30,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private string _roster = "Unknown";
     private string _diagnostic = "None";
     private string _afk = "Not tracking";
+    private string _nickname = "TOUCH · GeneralFallback · AutomaticUnavailable";
     private int _afkThresholdMinutes = 30;
 
     public ObservableCollection<TouchProcessCandidate> ProcessCandidates { get; } = [];
@@ -44,6 +48,17 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     {
         get => _localRoleId;
         set => SetProperty(ref _localRoleId, value);
+    }
+
+    public string ManualNickname
+    {
+        get => _manualNickname;
+        set
+        {
+            if (!SetProperty(ref _manualNickname, value)) return;
+            _manualNicknameRoleId = null;
+            _manualNicknameAwaitingBinding = !string.IsNullOrWhiteSpace(value);
+        }
     }
 
     public LocalRole ConfiguredRole
@@ -94,6 +109,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public string Roster { get => _roster; private set => SetProperty(ref _roster, value); }
     public string Diagnostic { get => _diagnostic; private set => SetProperty(ref _diagnostic, value); }
     public string Afk { get => _afk; private set => SetProperty(ref _afk, value); }
+    public string Nickname { get => _nickname; private set => SetProperty(ref _nickname, value); }
     public string DiscordStatus => "Disabled (P4)";
 
     public async Task InitializeAsync()
@@ -103,6 +119,10 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         LocalRoleId = settings.LocalRoleId ?? string.Empty;
         ConfiguredRole = settings.ConfiguredRole;
         _afkThresholdMinutes = settings.AfkThresholdMinutes;
+        _manualNickname = settings.ManualNickname ?? string.Empty;
+        _manualNicknameRoleId = settings.ManualNicknameRoleId;
+        _manualNicknameAwaitingBinding = false;
+        OnPropertyChanged(nameof(ManualNickname));
         DetectProcesses();
     }
 
@@ -143,12 +163,14 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             return false;
         }
 
-        await _settingsStore.SaveAsync(new AppSettings(LogPath.Trim(), roleId, ConfiguredRole, _afkThresholdMinutes));
+        await SaveSettingsAsync(roleId);
         _session = new MonitoringSession(
             LogPath.Trim(),
             roleId,
             ConfiguredRole,
-            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes));
+            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes),
+            manualNickname: string.IsNullOrWhiteSpace(ManualNickname) ? null : ManualNickname,
+            manualNicknameRoleId: _manualNicknameRoleId);
         _monitorCancellation = new CancellationTokenSource();
         _followProcessLifecycle = SelectedProcess is not null;
         IsMonitoring = true;
@@ -181,7 +203,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             {
                 if (_followProcessLifecycle && SelectedProcess is not null && !IsProcessRunning(SelectedProcess.ProcessId))
                 {
-                    ApplySnapshot(_session.ClearForGameClosed());
+                    _ = ApplySnapshot(_session.ClearForGameClosed());
                     SelectedProcess = null;
                 }
 
@@ -196,7 +218,9 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                             LogPath.Trim(),
                             roleId,
                             ConfiguredRole,
-                            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes));
+                            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes),
+                            manualNickname: string.IsNullOrWhiteSpace(ManualNickname) ? null : ManualNickname,
+                            manualNicknameRoleId: _manualNicknameRoleId);
                         SourceDiagnostic = "TouchClient restarted; monitoring opened a new session.";
                     }
                     else
@@ -206,7 +230,8 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                     }
                 }
 
-                ApplySnapshot(await _session.PollAsync(cancellationToken));
+                var snapshot = await _session.PollAsync(cancellationToken);
+                if (ApplySnapshot(snapshot)) await SaveSettingsAsync(snapshot.LocalRoleId);
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
         }
@@ -221,7 +246,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         }
     }
 
-    private void ApplySnapshot(MonitoringSnapshot snapshot)
+    private bool ApplySnapshot(MonitoringSnapshot snapshot)
     {
         SourceHealth = snapshot.SourceHealth.ToString();
         SourceDiagnostic = snapshot.SourceDiagnostic;
@@ -236,7 +261,24 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         Afk = snapshot.IsAfkTracking
             ? $"{(snapshot.IsAfk ? "AFK" : "Counting")} · {FormatElapsed(snapshot.AfkElapsed)} · {snapshot.AfkTimerOrigin} · threshold {_afkThresholdMinutes}m"
             : "Not tracking";
+        Nickname = $"Name: {snapshot.LocalNickname ?? "Unavailable"} · Source: {snapshot.NicknameSource} · " +
+            $"Tooltip: {snapshot.NicknameTooltip} · {snapshot.NicknameDiagnostic}";
+        if (_manualNicknameAwaitingBinding && !string.IsNullOrWhiteSpace(ManualNickname) && snapshot.LocalRoleId is not null)
+        {
+            _manualNicknameRoleId = snapshot.LocalRoleId;
+            _manualNicknameAwaitingBinding = false;
+            return true;
+        }
+        return false;
     }
+
+    private Task SaveSettingsAsync(string? roleId) => _settingsStore.SaveAsync(new AppSettings(
+        LogPath.Trim(),
+        roleId,
+        ConfiguredRole,
+        _afkThresholdMinutes,
+        string.IsNullOrWhiteSpace(ManualNickname) ? null : ManualNickname,
+        _manualNicknameRoleId));
 
     private static bool IsProcessRunning(int processId)
     {

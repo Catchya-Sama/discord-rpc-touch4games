@@ -29,6 +29,9 @@ public sealed partial class TouchLogParser
                 operation.Groups[2].Value));
         }
 
+        var localIdentity = LocalIdentityRegex().Match(line);
+        if (localIdentity.Success) events.Add(new LocalIdentityObserved(localIdentity.Groups[1].Value));
+
         var world = CurrentWorldRegex().Match(line);
         if (world.Success)
         {
@@ -62,4 +65,5 @@ public sealed partial class TouchLogParser
     [GeneratedRegex(@"_OnCmd_RoomLeave_Re\s+id:\s*(\d+)", RegexOptions.CultureInvariant)] private static partial Regex RoomLeaveRegex();
     [GeneratedRegex(@"oper\s*=\s*(\d+)\s+roleid\s*=\s*(\d+)", RegexOptions.CultureInvariant)] private static partial Regex OperationRegex();
     [GeneratedRegex(@"the_current_world\s+Type=([A-Za-z]+)", RegexOptions.CultureInvariant)] private static partial Regex CurrentWorldRegex();
+    [GeneratedRegex(@"formData:[^\r\n]*?roleid\s*=\s*(\d+)[^\r\n]*?isuserself\s*=\s*True\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)] private static partial Regex LocalIdentityRegex();
 }

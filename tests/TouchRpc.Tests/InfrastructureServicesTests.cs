@@ -23,7 +23,13 @@ public sealed class InfrastructureServicesTests
         using var temporary = new TemporaryDirectory();
         var path = Path.Combine(temporary.Path, "settings.json");
         var store = new AppSettingsStore(path);
-        var expected = new AppSettings("C:\\Games\\Touch\\output_log.txt", "10000000001", LocalRole.Spectator, 45);
+        var expected = new AppSettings(
+            "C:\\Games\\Touch\\output_log.txt",
+            "10000000001",
+            LocalRole.Spectator,
+            45,
+            "Synthetic Nickname",
+            "10000000001");
 
         await store.SaveAsync(expected);
         var actual = await store.LoadAsync();
@@ -55,6 +61,20 @@ public sealed class InfrastructureServicesTests
         var actual = await new AppSettingsStore(path).LoadAsync();
 
         Assert.AreEqual(30, actual.AfkThresholdMinutes);
+    }
+
+    [TestMethod]
+    public async Task SettingsStore_DoesNotPersistUnboundManualNickname()
+    {
+        using var temporary = new TemporaryDirectory();
+        var path = Path.Combine(temporary.Path, "settings.json");
+        var store = new AppSettingsStore(path);
+
+        await store.SaveAsync(new AppSettings(ManualNickname: "Unbound Name"));
+        var actual = await store.LoadAsync();
+
+        Assert.IsNull(actual.ManualNickname);
+        Assert.IsNull(actual.ManualNicknameRoleId);
     }
 
     [TestMethod]

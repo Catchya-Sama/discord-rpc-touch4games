@@ -6,8 +6,12 @@ public sealed class TouchStateReducer
     private readonly LocalRole _configuredRole;
     private readonly IMonotonicClock _clock;
     private readonly TimeSpan _afkThreshold;
+    private readonly string? _manualNickname;
+    private string? _manualNicknameRoleId;
     private long? _afkStartedAt;
     private string? _observedLocalRoleId;
+    private string? _automaticNickname;
+    private string? _automaticNicknameRoleId;
     private bool _historicalReplay;
     private bool _joinedGameplayObserved;
 
@@ -15,7 +19,9 @@ public sealed class TouchStateReducer
         string? localRoleId = null,
         LocalRole configuredRole = LocalRole.Unknown,
         IMonotonicClock? clock = null,
-        TimeSpan? afkThreshold = null)
+        TimeSpan? afkThreshold = null,
+        string? manualNickname = null,
+        string? manualNicknameRoleId = null)
     {
         if (localRoleId is not null && !RoleId.IsValid(localRoleId))
             throw new ArgumentException("Local role ID must contain digits only.", nameof(localRoleId));
@@ -24,9 +30,18 @@ public sealed class TouchStateReducer
         _configuredRole = configuredRole;
         _clock = clock ?? SystemMonotonicClock.Instance;
         _afkThreshold = afkThreshold ?? AfkPolicy.DefaultThreshold;
+        _manualNickname = string.IsNullOrWhiteSpace(manualNickname) ? null : manualNickname.Trim();
+        _manualNicknameRoleId = manualNicknameRoleId is not null && RoleId.IsValid(manualNicknameRoleId)
+            ? manualNicknameRoleId
+            : null;
         if (_afkThreshold <= TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(afkThreshold), "AFK threshold must be positive.");
         State = new TouchState();
+        if (localRoleId is not null)
+        {
+            State.LocalRoleId = localRoleId;
+            State.LocalRoleIdEvidence = EvidenceKind.UserConfigured;
+        }
         if (configuredRole != LocalRole.Unknown)
         {
             State.LocalRole = configuredRole;
@@ -52,9 +67,12 @@ public sealed class TouchStateReducer
                 State.IsRoleSwitchPending = true;
                 break;
             case RoomOperationObserved operation: ApplyRoomOperation(operation); break;
+            case LocalIdentityObserved identity: ApplyLocalIdentity(identity.RoleId); break;
+            case LocalNicknameObserved nickname: ApplyLocalNickname(nickname); break;
         }
 
         Tick();
+        RefreshNickname();
         return State;
     }
 
@@ -87,7 +105,49 @@ public sealed class TouchStateReducer
         }
 
         RefreshDiagnostic();
+        RefreshNickname();
         return State;
+    }
+
+    private void ApplyLocalIdentity(string roleId)
+    {
+        if (!RoleId.IsValid(roleId)) return;
+        var previousRoleId = State.LocalRoleId;
+        if (previousRoleId is not null && !string.Equals(previousRoleId, roleId, StringComparison.Ordinal))
+        {
+            _automaticNickname = null;
+            _automaticNicknameRoleId = null;
+            ClearRoomState();
+        }
+
+        _observedLocalRoleId = roleId;
+        State.LocalRoleId = roleId;
+        State.LocalRoleIdEvidence = EvidenceKind.Observed;
+        if (_manualNickname is not null && _manualNicknameRoleId is null) _manualNicknameRoleId = roleId;
+    }
+
+    private void ApplyLocalNickname(LocalNicknameObserved nickname)
+    {
+        if (State.LocalRoleId is null ||
+            !string.Equals(State.LocalRoleId, nickname.RoleId, StringComparison.Ordinal) ||
+            string.IsNullOrWhiteSpace(nickname.Nickname)) return;
+
+        _automaticNickname = nickname.Nickname.Trim();
+        _automaticNicknameRoleId = nickname.RoleId;
+    }
+
+    private void RefreshNickname()
+    {
+        var nickname = NicknamePolicy.Select(
+            State.LocalRoleId,
+            _automaticNickname,
+            _automaticNicknameRoleId,
+            _manualNickname,
+            _manualNicknameRoleId);
+        State.LocalNickname = nickname.LocalNickname;
+        State.NicknameSource = nickname.Source;
+        State.NicknameTooltip = nickname.Tooltip;
+        State.NicknameDiagnostic = nickname.Diagnostic;
     }
 
     private void BeginRoomEntry()
@@ -170,7 +230,7 @@ public sealed class TouchStateReducer
 
     private void ApplyMemberLeave(string roleId)
     {
-        var localRoleId = _configuredLocalRoleId ?? _observedLocalRoleId;
+        var localRoleId = _observedLocalRoleId ?? _configuredLocalRoleId;
         if (localRoleId is not null && string.Equals(roleId, localRoleId, StringComparison.Ordinal))
         {
             ClearRoomState();
@@ -184,10 +244,12 @@ public sealed class TouchStateReducer
     {
         if (operation.Operation != 1 || !State.IsRoleSwitchPending) return;
 
-        var localRoleId = _configuredLocalRoleId ?? _observedLocalRoleId;
+        var localRoleId = _observedLocalRoleId ?? _configuredLocalRoleId;
         if (localRoleId is null)
         {
             _observedLocalRoleId = operation.RoleId;
+            State.LocalRoleId = operation.RoleId;
+            State.LocalRoleIdEvidence = EvidenceKind.Inferred;
         }
         else if (!string.Equals(operation.RoleId, localRoleId, StringComparison.Ordinal))
         {

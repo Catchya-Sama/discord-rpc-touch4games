@@ -16,7 +16,7 @@ Replay menerima path file, character role ID manual opsional, dan kalibrasi role
 
 Pipeline: log tail → line assembler → parser → typed events → state reducer → presence model → preview/Discord.
 
-State: clientSession, roomSession/internalRoomId, phase (unknown/lobby/waiting/loading/playing/results), localRole (unknown/joined/spectator), evidence/confidence, members HashSet<string>, rosterCompleteness, AFK clock. Simpan role ID sebagai string atau UInt64, jangan Int32.
+State: clientSession, roomSession/internalRoomId, phase (unknown/lobby/waiting/loading/playing/results), localRole (unknown/joined/spectator), local identity/nickname + evidence, members HashSet<string>, rosterCompleteness, AFK clock. Simpan role ID sebagai string atau UInt64, jangan Int32.
 
 ## Reader
 Read-only, FileShare.ReadWrite | FileShare.Delete sesuai platform. Initial replay membangun state tanpa mem-publish semua history ke Discord; publish hanya keadaan akhir yang konsisten. Tail berdasarkan byte offset dengan decoder incremental, buffer baris parsial, CRLF/UTF-8. Jangan baca ulang seluruh log tiap poll.
@@ -48,6 +48,12 @@ Jika snapshot/log tidak lengkap, flag unknown/partial; jangan mengklaim count pa
 ## Identitas lokal
 Cari field local character yang eksplisit dan uji dengan fixture. `userid` launcher berbeda dari `roleid` karakter; jangan disamakan. Tidak boleh memilih AddPlayer pertama atau semua RoomNotify sebagai lokal.
 Jika belum bisa otomatis: input Role ID manual dengan validasi, tersimpan lokal. Default kosong; contoh ID pengguna bukan default.
+
+P3 nickname preparation mengenali self role ID hanya dari marker eksplisit `isuserself=True` atau bukti switch yang sudah dikorelasikan. Parser memakai whitelist typed event dan tidak menyimpan command line, signature atau login field. Log aktual belum memiliki pemetaan nickname↔self role ID yang cukup; `ElsePlayerName` sengaja diabaikan.
+
+`NicknamePolicy` memilih otomatis terverifikasi, lalu manual yang cocok identitas, lalu `TOUCH`. Manual tanpa binding hanya hidup dalam monitoring session dan baru dipersistenkan setelah role ID terverifikasi. Session file/client baru membuat reducer baru dan menghapus otomatis; pergantian self role ID juga membersihkan otomatis serta room/AFK lama. Lobby/keluar room tidak menghapus identitas.
+
+Core menyimpan nickname Unicode penuh dan kandidat tooltip terpisah. Kandidat P4 dibatasi 2–128 text elements dengan pemotongan pada batas grapheme/text element. Nickname tidak menjadi bagian `PresenceView` Details/State sehingga perubahan identitas tidak menyentuh roster atau timer AFK.
 
 ## Discord
 Adapter interface agar Core dapat diuji tanpa Discord. Fase awal disabled bila ID belum tersedia, jangan menghalangi preview.

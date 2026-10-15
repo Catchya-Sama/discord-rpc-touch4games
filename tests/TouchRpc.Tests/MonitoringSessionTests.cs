@@ -52,6 +52,34 @@ public sealed class MonitoringSessionTests
     }
 
     [TestMethod]
+    public async Task SelfIdentityAndBoundManualNickname_AppearInSnapshotWithoutChangingPresence()
+    {
+        using var temporary = new TemporaryLog(string.Join("\n",
+        [
+            "formData:serverid=1&roleid=10000000001&isuserself=True",
+            "_OnCmd_RoomDetailInfo_Re",
+            "RoomMemer: 10000000001",
+            "RoomMemer: 10000000002",
+            "the_current_world Type=WaitRoom",
+            string.Empty,
+        ]));
+        var session = new MonitoringSession(
+            temporary.Path,
+            manualNickname: "Synthetic Nickname",
+            manualNicknameRoleId: "10000000001");
+
+        var snapshot = await session.PollAsync();
+
+        Assert.AreEqual("10000000001", snapshot.LocalRoleId);
+        Assert.AreEqual(EvidenceKind.Observed, snapshot.LocalRoleIdEvidence);
+        Assert.AreEqual("Synthetic Nickname", snapshot.LocalNickname);
+        Assert.AreEqual(NicknameSource.Manual, snapshot.NicknameSource);
+        Assert.AreEqual("Synthetic Nickname", snapshot.NicknameTooltip);
+        Assert.AreEqual("2 Players Joined", snapshot.Presence.Details);
+        Assert.AreEqual("Waiting", snapshot.Presence.State);
+    }
+
+    [TestMethod]
     public async Task TruncateAndNewRoom_DoesNotKeepOldRoster()
     {
         using var temporary = new TemporaryLog(string.Join("\n",

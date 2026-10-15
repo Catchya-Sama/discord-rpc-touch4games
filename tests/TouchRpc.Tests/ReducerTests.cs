@@ -117,6 +117,8 @@ public sealed class ReducerTests
         reducer.Apply(new RoleSwitchRequested());
         reducer.Apply(new RoomOperationObserved(1, "10000000001"));
         Assert.AreEqual(LocalRole.Spectator, reducer.State.LocalRole);
+        Assert.AreEqual("10000000001", reducer.State.LocalRoleId);
+        Assert.AreEqual(EvidenceKind.Inferred, reducer.State.LocalRoleIdEvidence);
 
         reducer.Apply(new RoomOperationObserved(1, "10000000002"));
         Assert.AreEqual(LocalRole.Spectator, reducer.State.LocalRole);

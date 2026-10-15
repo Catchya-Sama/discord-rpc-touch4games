@@ -11,3 +11,5 @@ public sealed record GameplayObserved : LogEvent;
 public sealed record ResultsObserved : LogEvent;
 public sealed record RoleSwitchRequested : LogEvent;
 public sealed record RoomOperationObserved(int Operation, string RoleId) : LogEvent;
+public sealed record LocalIdentityObserved(string RoleId) : LogEvent;
+public sealed record LocalNicknameObserved(string RoleId, string Nickname) : LogEvent;

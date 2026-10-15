@@ -17,6 +17,12 @@ public sealed class TouchState
     public bool IsAfk { get; internal set; }
     public TimeSpan AfkElapsed { get; internal set; }
     public AfkTimerOrigin AfkTimerOrigin { get; internal set; } = AfkTimerOrigin.None;
+    public string? LocalRoleId { get; internal set; }
+    public EvidenceKind LocalRoleIdEvidence { get; internal set; } = EvidenceKind.Unknown;
+    public string? LocalNickname { get; internal set; }
+    public NicknameSource NicknameSource { get; internal set; } = NicknameSource.GeneralFallback;
+    public string NicknameTooltip { get; internal set; } = "TOUCH";
+    public NicknameDiagnostic NicknameDiagnostic { get; internal set; } = NicknameDiagnostic.AutomaticUnavailable;
     public int UniqueMemberCount => _members.Count;
     public IReadOnlyCollection<string> Members => _members;
 

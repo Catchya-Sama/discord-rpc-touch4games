@@ -28,6 +28,12 @@ Gunakan fixture sintetis; dokumentasi log adalah hasil riset, bukan oracle unive
 | File truncate/replaced/restart client | sesi baru, tidak status lama |
 | Discord reconnect | publish state terbaru saja |
 | Client exit/stop monitoring | clear RPC |
+| isuserself=True/False | hanya True menetapkan character role ID lokal |
+| ElsePlayerName/pemain lain | tidak pernah mengganti nickname lokal |
+| Nickname otomatis/manual/fallback | verified auto → manual cocok ID → TOUCH |
+| Account/session berubah | otomatis lama dibersihkan; manual mismatch tidak dipakai |
+| Unicode/panjang tooltip | kapitalisasi tetap, grapheme aman, kandidat 2–128 |
+| Perubahan nickname | count, state dan anchor AFK tidak berubah |
 
 Offline tests: Core reducer/parser/clock dan reader integration dengan file sementara. Windows integration untuk process detection/UI/named-pipe/SDK. Live tests membutuhkan pengguna; tidak boleh ditandai pass dari fixture saja.
 Catat waktu event diketahui + waktu preview + waktu terlihat Discord untuk beberapa transisi; jangan menganggap pecahan milidetik read minus timestamp client integer sebagai latency presisi.
@@ -100,3 +106,6 @@ Clock test deterministik menguji:
 8. Kirim hanya Source Health, Phase, Role, Roster, AFK dan Diagnostic; jangan kirim raw log.
 
 Live P3 tetap pending sampai urutan di atas dikonfirmasi pada TOUCH sebenarnya. Automated tests memakai threshold pendek hanya untuk mempercepat test dan selalu diberi label test.
+
+## Pemeriksaan nickname P3
+Gunakan fixture sintetis; raw log dan nickname pengguna tidak masuk repository. Test mencakup self identity eksplisit, penolakan `ElsePlayerName`, precedence otomatis/manual/fallback, binding manual, pergantian account/session, keluar room, Unicode, batas tooltip dan regresi status/roster/AFK. Log live saat ini hanya membuktikan self role ID, belum nickname otomatis. Pada P4, verifikasi `assets.large_text` dengan hover logo Discord; jangan tandai pass dari preview P3.

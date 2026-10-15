@@ -8,7 +8,7 @@
 - Path detection dan role ID otomatis belum diuji untuk pengguna lain.
 
 ## Fase aktif berikutnya
-P3 corrective review: live game mengonfirmasi phase, tetapi menemukan role tetap unknown karena marker entry dan world parser tidak cocok dengan bentuk log aktual. Koreksi parser/reducer sedang divalidasi; jangan mulai P4.
+P3 nickname preparation: status/roster/AFK dipertahankan, identitas nickname dan kandidat tooltip disiapkan untuk P4. Jangan mulai adapter Discord dalam fase ini.
 
 ## 15 Oktober 2026 / P0 / main
 Perubahan:
@@ -145,6 +145,28 @@ Risiko atau unknown:
 Push status: dicatat pada laporan fase setelah commit/push.
 
 Langkah berikutnya: pengguna menjalankan protokol live P3. P4 Discord tidak dimulai sampai review P3.
+
+## 15 Oktober 2026 / P3 nickname preparation / main
+Perubahan:
+- Ditambahkan model local identity/nickname, sumber nilai, diagnostic dan kandidat tooltip `LargeText` tanpa mengubah Details/State.
+- Parser mengenali self character role ID hanya dari `isuserself=True`; `userid` launcher, command line dan `ElsePlayerName` tidak digunakan sebagai nickname lokal.
+- Settings/UI menambahkan nickname manual. Manual yang belum terikat hanya berlaku pada session aktif; setelah self role ID terverifikasi, binding disimpan lokal.
+- Otomatis terverifikasi mengalahkan manual; manual mismatch tidak dipakai; fallback umum adalah `TOUCH`.
+- Unicode/kapitalisasi dipertahankan dan kandidat tooltip dipotong aman pada 128 text elements; nilai satu text element jatuh ke `TOUCH` agar memenuhi minimum P4.
+
+Observed/user-confirmed/unknown:
+- User-confirmed: pembacaan phase/role live setelah koreksi sebelumnya berhasil; boundary AFK manual tetap tidak diuji.
+- Observed read-only: log memuat self `roleid` eksplisit melalui `isuserself=True` serta memuat launcher/login fields yang tidak boleh disimpan.
+- Observed: `ElsePlayerName` tidak memiliki pemetaan roleid yang cukup dan dapat mewakili pemain lain.
+- Unknown: sumber nickname otomatis terverifikasi belum ditemukan, sehingga fitur otomatis belum diklaim berhasil; manual fallback tersedia.
+- Pending P4: pengiriman `assets.large_text` dan hover logo Discord belum diimplementasikan atau diuji.
+
+Pemeriksaan:
+- Formatter verification dan Release build lulus.
+- Automated tests: 69 passed, 0 failed, 0 skipped.
+- Replay fixture lama tetap menghasilkan `2 Players Joined` dan `Spectating`; perubahan nickname tidak mengubah payload status P1–P3.
+- WPF smoke launch melalui host .NET user-local lulus dengan kolom nickname baru.
+- Live nickname otomatis belum dapat diverifikasi karena log aktual tidak menyediakan pemetaan nickname↔self role ID yang cukup.
 
 ## Format update fase
 Tanggal / fase / branch:

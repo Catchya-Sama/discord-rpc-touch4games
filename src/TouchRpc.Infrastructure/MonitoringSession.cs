@@ -15,6 +15,12 @@ public sealed record MonitoringSnapshot(
     bool IsAfk,
     TimeSpan AfkElapsed,
     AfkTimerOrigin AfkTimerOrigin,
+    string? LocalRoleId,
+    EvidenceKind LocalRoleIdEvidence,
+    string? LocalNickname,
+    NicknameSource NicknameSource,
+    string NicknameTooltip,
+    NicknameDiagnostic NicknameDiagnostic,
     bool NewSession,
     int ProcessedLines);
 
@@ -26,6 +32,8 @@ public sealed class MonitoringSession
     private readonly LocalRole _configuredRole;
     private readonly IMonotonicClock _clock;
     private readonly TimeSpan _afkThreshold;
+    private readonly string? _manualNickname;
+    private readonly string? _manualNicknameRoleId;
     private TouchStateReducer _reducer;
 
     public MonitoringSession(
@@ -33,13 +41,17 @@ public sealed class MonitoringSession
         string? localRoleId = null,
         LocalRole configuredRole = LocalRole.Unknown,
         IMonotonicClock? clock = null,
-        TimeSpan? afkThreshold = null)
+        TimeSpan? afkThreshold = null,
+        string? manualNickname = null,
+        string? manualNicknameRoleId = null)
     {
         _reader = new LiveLogReader(logPath);
         _localRoleId = localRoleId;
         _configuredRole = configuredRole;
         _clock = clock ?? SystemMonotonicClock.Instance;
         _afkThreshold = afkThreshold ?? AfkPolicy.DefaultThreshold;
+        _manualNickname = manualNickname;
+        _manualNicknameRoleId = manualNicknameRoleId;
         _reducer = CreateReducer();
     }
 
@@ -75,6 +87,12 @@ public sealed class MonitoringSession
             state.IsAfk,
             state.AfkElapsed,
             state.AfkTimerOrigin,
+            state.LocalRoleId,
+            state.LocalRoleIdEvidence,
+            state.LocalNickname,
+            state.NicknameSource,
+            state.NicknameTooltip,
+            state.NicknameDiagnostic,
             batch.NewSession,
             batch.Lines.Count);
     }
@@ -95,9 +113,21 @@ public sealed class MonitoringSession
             false,
             TimeSpan.Zero,
             AfkTimerOrigin.None,
+            null,
+            EvidenceKind.Unknown,
+            null,
+            NicknameSource.GeneralFallback,
+            NicknamePolicy.GeneralTooltip,
+            NicknameDiagnostic.AutomaticUnavailable,
             true,
             0);
     }
 
-    private TouchStateReducer CreateReducer() => new(_localRoleId, _configuredRole, _clock, _afkThreshold);
+    private TouchStateReducer CreateReducer() => new(
+        _localRoleId,
+        _configuredRole,
+        _clock,
+        _afkThreshold,
+        _manualNickname,
+        _manualNicknameRoleId);
 }
