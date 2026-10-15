@@ -2,8 +2,8 @@
 Tanggal keputusan: 15 Oktober 2026. Repository ini masih berada pada fase P0
 (bootstrap repository dan dokumentasi); belum ada aplikasi yang dapat dijalankan.
 
-Pemilik produk: Sultan Akbar. Arsitek: ChatGPT. Implementasi: Cline.
-Target: aplikasi pendamping Windows, C# .NET, sumber data log lokal TOUCH, keluaran Discord Rich Presence.
+Project Owner: Putty Adelya Sasta.
+Target: Software pendamping Windows, C# .NET, sumber data log local file TOUCH, keluaran Discord Rich Presence.
 
 ## Scope rilis pertama
 - Lobby: `In Lobby`.
@@ -15,23 +15,17 @@ Target: aplikasi pendamping Windows, C# .NET, sumber data log lokal TOUCH, kelua
 
 Mode permainan, musik, nomor room dan kapasitas slot berada di luar scope rilis ini.
 
-## Mulai
-1. Clone repository dan buka foldernya di VS Code pada Windows.
-2. Baca `AGENTS.md` dan docs sesuai urutan di bawah.
-3. Gunakan `CLINE-START-HERE.md` untuk memulai sesi implementasi baru bila diperlukan.
-4. Kerjakan satu fase, uji, review diff, commit, push, lalu catat progres. Jangan langsung membangun semua fase.
 
-## Urutan baca
+## Step Progress nya
 AGENTS.md → docs/01-SPEC.md → docs/02-LOG-EVIDENCE.md → docs/03-ARCHITECTURE.md → docs/04-PHASES.md → docs/05-GITHUB.md → docs/06-TESTING.md → docs/PROGRESS.md.
 
 ## Input yang belum tersedia
-- Pilihan lisensi proyek; jangan menambahkan lisensi tanpa keputusan pemilik.
-- Discord Application ID, nama aplikasi final, gambar dan asset key.
-- Deteksi role ID lokal untuk pengguna umum belum tervalidasi.
+- Pilihan license project ; ga boleh menambahkan license tanpa keputusan owner.
+- Discord Application ID, nama software final, image dan asset key.
+- Deteksi role ID local untuk pengguna belum ada .
 
-Remote proyek terverifikasi sebagai `https://github.com/Catchya-Sama/discord-rpc-touch4games.git`.
-Discord ID bukan prasyarat P0–P3 dan tidak boleh dikarang.
-Raw log tidak disertakan: berpotensi berisi signature, password room, identitas dan chat. Pengguna menyediakan log lokal untuk pengujian; gunakan fixture sintetis di Git.
 
 ## Toolchain
-Target implementasi P1 dan seterusnya adalah .NET 10 LTS. Mesin bootstrap saat ini hanya memiliki SDK 8.0.408, sehingga SDK .NET 10 harus dipasang sebelum project aplikasi dibuat. P0 sendiri hanya mengubah dokumentasi dan tidak membutuhkan build.
+Target implementation P1 dan seterusnya adalah .NET 10 LTS. Mesin bootstrap saat ini hanya memiliki SDK 8.0.408, sehingga SDK .NET 10 dipasang sebelum project aplikasi dibuat. P0 sendiri hanya mengubah dokumentasi dan tidak membutuhkan build.
+
+Yayyy itu step awal nya gengggg. kalo bisa yaudah
