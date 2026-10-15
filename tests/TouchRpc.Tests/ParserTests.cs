@@ -29,4 +29,16 @@ public sealed class ParserTests
     [TestMethod]
     public void ParseLine_DoesNotExposeUnknownContentAsEvent() =>
         Assert.IsEmpty(_parser.ParseLine("chat sensitive-content unrelated text"));
+
+    [TestMethod]
+    public void ParseLine_UsesCurrentWorldAndIgnoresLastWorld()
+    {
+        var waiting = _parser.ParseLine(
+            "the_current_world Type=WaitRoom -------the_last_world Type=RoleCreateRoom");
+        var lobby = _parser.ParseLine(
+            "the_current_world Type=RoleCreateRoom -------the_last_world Type=PlayRoom");
+
+        Assert.AreEqual(SessionPhase.Waiting, waiting.OfType<WorldObserved>().Single().Phase);
+        Assert.AreEqual(SessionPhase.Lobby, lobby.OfType<WorldObserved>().Single().Phase);
+    }
 }

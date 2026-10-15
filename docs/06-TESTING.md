@@ -10,11 +10,14 @@ Gunakan fixture sintetis; dokumentasi log adalah hasil riset, bukan oracle unive
 | RoomLeave_Re remote | hapus anggota tepat satu kali |
 | RoomLeave_Re local, lalu room baru | roster dan role lama hilang |
 | Masuk room pending | infer Joined hanya setelah entry lengkap |
+| RoomDetail tanpa RoomEnter marker | tetap membuka entry dan infer role saat world dikenal |
 | Masuk room tengah permainan | Spectator, jangan Smashing Key |
+| current world + last world satu baris | hanya current world menentukan phase |
 | Spec → results → WaitRoom | role tetap Spec, AFK clock tidak reset |
 | Ready/CancelReady | tidak mengubah role |
 | Host transfer/oper=1 tanpa SwitchRoleType | tidak toggle role |
 | SwitchRoleType tanpa balasan | jangan langsung toggle; unknown/diagnostic |
+| SwitchRoleType tanpa configured role ID | pelajari ID dari konfirmasi pertama, lalu cocokkan switch berikutnya |
 | Local gameplay Joined | Smashing Key, AFK suspend |
 | Spectator menerima StartPlayedTime | tetap Spec dan timer berjalan |
 | Count tak diketahui | tampilkan In Room, bukan nol |

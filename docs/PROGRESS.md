@@ -8,7 +8,7 @@
 - Path detection dan role ID otomatis belum diuji untuk pengguna lain.
 
 ## Fase aktif berikutnya
-P3: AFK dan lifecycle sudah diimplementasikan secara lokal; live game verification masih pending. Jangan mulai P4 sebelum hasil P3 direview.
+P3 corrective review: live game mengonfirmasi phase, tetapi menemukan role tetap unknown karena marker entry dan world parser tidak cocok dengan bentuk log aktual. Koreksi parser/reducer sedang divalidasi; jangan mulai P4.
 
 ## 15 Oktober 2026 / P0 / main
 Perubahan:
@@ -126,6 +126,15 @@ Pemeriksaan dijalankan dan hasil:
 - Regression rewrite same-length sempat menemukan defect reader; prefix probe/last-write marker ditambahkan dan test kemudian lulus.
 
 Live verification: pending — boundary 30 menit dan transisi Joined/Spectator belum dikonfirmasi pada TOUCH nyata.
+
+Corrective review dari live test pengguna:
+- User-confirmed: preview berpindah `In Room` → `In Lobby` → `In Session`, tetapi role tetap `Unknown`; tes manual boundary AFK 30 menit ditunda.
+- Observed read-only pada log lokal: `_OnCmd_RoomEnter` dan `_OnCmd_GetGameInfoRe` tidak muncul, sementara room detail, WaitRoom/PlayRoom dan SwitchRoleType tersedia.
+- Observed: satu baris world memuat `the_current_world` dan `the_last_world`; parser lama dapat salah membaca last world sebagai phase aktif.
+- Koreksi: parse current world saja, room detail dapat membuka entry, direct entry ke PlayRoom menginfer Spectator, dan konfirmasi switch dapat mempelajari local role ID untuk session tanpa hard-code.
+- Sanitized structural replay dari log aktual menghasilkan phase Waiting, role Joined inferred, roster complete dan state Waiting; raw log/ID tidak disalin ke repository.
+- Corrective validation: formatter verification, Release build, 56/56 automated tests dan WPF smoke launch melalui host .NET user-local lulus.
+- Live retest setelah build koreksi masih diperlukan untuk mengonfirmasi Waiting/Spectating/Smashing Key pada UI; boundary AFK 30 menit tetap ditunda dan tidak diklaim pass.
 
 Risiko atau unknown:
 - Marker live gameplay/results tetap bergantung format log yang tidak merupakan API stabil.

@@ -33,6 +33,31 @@ public sealed class ReducerTests
     }
 
     [TestMethod]
+    public void RoomDetailsWithoutEntryMarker_InfersJoinedAtWaitingWorld()
+    {
+        var reducer = new TouchStateReducer();
+        reducer.Replay([new RoomDetailsStarted(),
+            new MemberObserved("10000000001", MemberEvidence.Snapshot),
+            new WorldObserved(SessionPhase.Waiting)]);
+
+        Assert.AreEqual(LocalRole.Joined, reducer.State.LocalRole);
+        Assert.AreEqual(RosterCompleteness.Complete, reducer.State.RosterCompleteness);
+        Assert.AreEqual("Waiting", PresenceFormatter.Format(reducer.State).State);
+    }
+
+    [TestMethod]
+    public void RoomDetailsDirectlyToPlayRoom_InfersSpectatorWithoutLegacyMidgameMarker()
+    {
+        var reducer = new TouchStateReducer();
+        reducer.Replay([new RoomDetailsStarted(),
+            new MemberObserved("10000000001", MemberEvidence.Snapshot),
+            new WorldObserved(SessionPhase.Playing), new GameplayObserved()]);
+
+        Assert.AreEqual(LocalRole.Spectator, reducer.State.LocalRole);
+        Assert.AreEqual("Spectating", PresenceFormatter.Format(reducer.State).State);
+    }
+
+    [TestMethod]
     public void DuplicateMembers_DoNotChangeUniqueCount()
     {
         var reducer = CompletedJoinedRoom("10000000001", "10000000002", "10000000003");
@@ -85,6 +110,23 @@ public sealed class ReducerTests
     }
 
     [TestMethod]
+    public void RoleSwitch_LearnsLocalRoleIdFromPendingConfirmation()
+    {
+        var reducer = CompletedJoinedRoom("10000000001", "10000000002");
+
+        reducer.Apply(new RoleSwitchRequested());
+        reducer.Apply(new RoomOperationObserved(1, "10000000001"));
+        Assert.AreEqual(LocalRole.Spectator, reducer.State.LocalRole);
+
+        reducer.Apply(new RoomOperationObserved(1, "10000000002"));
+        Assert.AreEqual(LocalRole.Spectator, reducer.State.LocalRole);
+
+        reducer.Apply(new RoleSwitchRequested());
+        reducer.Apply(new RoomOperationObserved(1, "10000000001"));
+        Assert.AreEqual(LocalRole.Joined, reducer.State.LocalRole);
+    }
+
+    [TestMethod]
     public void ReadyAndHostOperations_DoNotChangeRole()
     {
         var reducer = new TouchStateReducer("10000000001");
@@ -112,6 +154,22 @@ public sealed class ReducerTests
     {
         var reducer = new TouchStateReducer(configuredRole: LocalRole.Spectator);
         reducer.Apply(new RoomEntryRequested());
+        reducer.Apply(new RoomDetailsStarted());
+        reducer.Apply(new MemberObserved("10000000001", MemberEvidence.Snapshot));
+        reducer.Apply(new WorldObserved(SessionPhase.Waiting));
+
+        Assert.AreEqual(LocalRole.Spectator, reducer.State.LocalRole);
+        Assert.AreEqual(EvidenceKind.UserConfigured, reducer.State.RoleEvidence);
+        Assert.AreEqual("Spectating", PresenceFormatter.Format(reducer.State).State);
+    }
+
+    [TestMethod]
+    public void ConfiguredRole_IsRestoredAfterLobbyWithoutLegacyEntryMarker()
+    {
+        var reducer = new TouchStateReducer(configuredRole: LocalRole.Spectator);
+        reducer.Apply(new WorldObserved(SessionPhase.Lobby));
+        Assert.AreEqual(LocalRole.Unknown, reducer.State.LocalRole);
+
         reducer.Apply(new RoomDetailsStarted());
         reducer.Apply(new MemberObserved("10000000001", MemberEvidence.Snapshot));
         reducer.Apply(new WorldObserved(SessionPhase.Waiting));

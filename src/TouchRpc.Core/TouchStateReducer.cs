@@ -2,11 +2,12 @@ namespace TouchRpc.Core;
 
 public sealed class TouchStateReducer
 {
-    private readonly string? _localRoleId;
+    private readonly string? _configuredLocalRoleId;
     private readonly LocalRole _configuredRole;
     private readonly IMonotonicClock _clock;
     private readonly TimeSpan _afkThreshold;
     private long? _afkStartedAt;
+    private string? _observedLocalRoleId;
     private bool _historicalReplay;
     private bool _joinedGameplayObserved;
 
@@ -19,7 +20,7 @@ public sealed class TouchStateReducer
         if (localRoleId is not null && !RoleId.IsValid(localRoleId))
             throw new ArgumentException("Local role ID must contain digits only.", nameof(localRoleId));
 
-        _localRoleId = localRoleId;
+        _configuredLocalRoleId = localRoleId;
         _configuredRole = configuredRole;
         _clock = clock ?? SystemMonotonicClock.Instance;
         _afkThreshold = afkThreshold ?? AfkPolicy.DefaultThreshold;
@@ -108,6 +109,7 @@ public sealed class TouchStateReducer
 
     private void StartRoomDetails()
     {
+        if (!State.IsRoomEntryPending) BeginRoomEntry();
         State.ClearMembers();
         State.RoomDetailsSeen = true;
         State.RosterCompleteness = RosterCompleteness.Partial;
@@ -143,7 +145,7 @@ public sealed class TouchStateReducer
             return;
         }
 
-        if (phase == SessionPhase.Playing && State.MidgameEntrySeen)
+        if (phase == SessionPhase.Playing && State.RoomDetailsSeen)
         {
             State.LocalRole = LocalRole.Spectator;
             State.RoleEvidence = EvidenceKind.Inferred;
@@ -168,7 +170,8 @@ public sealed class TouchStateReducer
 
     private void ApplyMemberLeave(string roleId)
     {
-        if (_localRoleId is not null && string.Equals(roleId, _localRoleId, StringComparison.Ordinal))
+        var localRoleId = _configuredLocalRoleId ?? _observedLocalRoleId;
+        if (localRoleId is not null && string.Equals(roleId, localRoleId, StringComparison.Ordinal))
         {
             ClearRoomState();
             return;
@@ -179,9 +182,17 @@ public sealed class TouchStateReducer
 
     private void ApplyRoomOperation(RoomOperationObserved operation)
     {
-        if (operation.Operation != 1 || _localRoleId is null ||
-            !string.Equals(operation.RoleId, _localRoleId, StringComparison.Ordinal) ||
-            !State.IsRoleSwitchPending) return;
+        if (operation.Operation != 1 || !State.IsRoleSwitchPending) return;
+
+        var localRoleId = _configuredLocalRoleId ?? _observedLocalRoleId;
+        if (localRoleId is null)
+        {
+            _observedLocalRoleId = operation.RoleId;
+        }
+        else if (!string.Equals(operation.RoleId, localRoleId, StringComparison.Ordinal))
+        {
+            return;
+        }
 
         State.LocalRole = State.LocalRole switch
         {

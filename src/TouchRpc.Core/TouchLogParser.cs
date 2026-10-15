@@ -29,12 +29,18 @@ public sealed partial class TouchLogParser
                 operation.Groups[2].Value));
         }
 
-        if (line.Contains("the_current_world Type=WaitRoom", StringComparison.Ordinal))
-            events.Add(new WorldObserved(SessionPhase.Waiting));
-        else if (line.Contains("Type=RoleCreateRoom", StringComparison.Ordinal))
-            events.Add(new WorldObserved(SessionPhase.Lobby));
-        else if (line.Contains("Type=PlayRoom", StringComparison.Ordinal))
-            events.Add(new WorldObserved(SessionPhase.Playing));
+        var world = CurrentWorldRegex().Match(line);
+        if (world.Success)
+        {
+            var phase = world.Groups[1].Value switch
+            {
+                "WaitRoom" => SessionPhase.Waiting,
+                "RoleCreateRoom" => SessionPhase.Lobby,
+                "PlayRoom" => SessionPhase.Playing,
+                _ => SessionPhase.Unknown,
+            };
+            if (phase != SessionPhase.Unknown) events.Add(new WorldObserved(phase));
+        }
 
         if (line.Contains("StartPlayedTime", StringComparison.Ordinal) || line.Contains("Dancing", StringComparison.Ordinal))
             events.Add(new GameplayObserved());
@@ -55,4 +61,5 @@ public sealed partial class TouchLogParser
     [GeneratedRegex(@"AddPlayer\s+roleid\s*=\s*(\d+)", RegexOptions.CultureInvariant)] private static partial Regex AddPlayerRegex();
     [GeneratedRegex(@"_OnCmd_RoomLeave_Re\s+id:\s*(\d+)", RegexOptions.CultureInvariant)] private static partial Regex RoomLeaveRegex();
     [GeneratedRegex(@"oper\s*=\s*(\d+)\s+roleid\s*=\s*(\d+)", RegexOptions.CultureInvariant)] private static partial Regex OperationRegex();
+    [GeneratedRegex(@"the_current_world\s+Type=([A-Za-z]+)", RegexOptions.CultureInvariant)] private static partial Regex CurrentWorldRegex();
 }

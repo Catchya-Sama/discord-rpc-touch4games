@@ -30,6 +30,28 @@ public sealed class MonitoringSessionTests
     }
 
     [TestMethod]
+    public async Task LiveWorldFormatWithoutLegacyEntryMarker_InfersJoinedEndToEnd()
+    {
+        using var temporary = new TemporaryLog(string.Join("\n",
+        [
+            "_OnCmd_RoomDetailInfo_Re",
+            "RoomMemer: 10000000001",
+            "RoomMemer: 10000000002",
+            "the_current_world Type=WaitRoom -------the_last_world Type=RoleCreateRoom",
+            string.Empty,
+        ]));
+        var session = new MonitoringSession(temporary.Path);
+
+        var snapshot = await session.PollAsync();
+
+        Assert.AreEqual(SessionPhase.Waiting, snapshot.Phase);
+        Assert.AreEqual(LocalRole.Joined, snapshot.LocalRole);
+        Assert.AreEqual(EvidenceKind.Inferred, snapshot.RoleEvidence);
+        Assert.AreEqual("Waiting", snapshot.Presence.State);
+        Assert.AreEqual(2, snapshot.MemberCount);
+    }
+
+    [TestMethod]
     public async Task TruncateAndNewRoom_DoesNotKeepOldRoster()
     {
         using var temporary = new TemporaryLog(string.Join("\n",

@@ -4,6 +4,7 @@ Sumber: pengujian manual pengguna 13–15 Oktober 2026, micro client Windows, Un
 | Role | Bukti / interpretation | Line |
 |---|---|---|
 | `the_current_world Type=WaitRoom` | Room menunggu, observed | Tidak menetapkan role |
+| `the_current_world Type=X -------the_last_world Type=Y` | X adalah world aktif | Jangan membaca Y sebagai phase aktif |
 | `Type=RoleCreateRoom` setelah keluar | Lobby pada alur diuji | Jangan samakan semua scene lain dengan lobby |
 | `_OnCmd_RoomDetailInfo_Re` lalu `RoomMemer: ID` | Snapshot anggota awal | Cari ejaan typo RoomMemer persis; verifikasi akhir snapshot |
 | `RoomMember roleid = ID`, `AddPlayer roleid = ID` | Pemuatan anggota | AddPlayer juga terjadi saat rebuild role/scene |
@@ -22,9 +23,9 @@ Sumber: pengujian manual pengguna 13–15 Oktober 2026, micro client Windows, Un
 
 ## Role inference untuk prototipe
 User-confirmed: masuk room belum bermain → Joined; masuk room sudah bermain → Spectator; spectator bertahan setelah match selesai sampai menekan Join.
-Observed masuk tengah game: RoomEnter → RoomDetailInfo → `_OnCmd_GetGameInfoRe`, `stage=2, stage=c` → langsung RoleCreateRoom ke PlayRoom. Jangan mengartikan huruf stage sebagai mode tanpa bukti.
+Observed masuk tengah game: room detail → langsung `the_current_world Type=PlayRoom` berarti Spectator pada alur yang dikonfirmasi pengguna. `_OnCmd_RoomEnter` dan `_OnCmd_GetGameInfoRe` tidak selalu muncul pada log live; room detail membuka lifecycle entry. Jangan mengartikan huruf stage sebagai mode tanpa bukti.
 Role disimpan terpisah dari phase. Inference menunggu rangkaian entry selesai agar WaitRoom sementara tidak menyebabkan salah Joined.
-SwitchRoleType = request; toggle hanya setelah balasan lokal yang cocok dalam konteks request, sekali. Jangan toggle setiap oper=1. Jika timeout/ambigu, tandai unknown, jangan tebak.
+SwitchRoleType = request; toggle hanya setelah balasan oper=1 dalam konteks request, sekali. Bila character role ID belum dikonfigurasi, ID pada konfirmasi pertama dipelajari untuk session itu dan dipakai mencocokkan konfirmasi berikutnya. Jangan toggle setiap oper=1. Jika timeout/ambigu, tandai unknown, jangan tebak.
 Perubahan anggota remote oper=1 tidak otomatis berarti toggle role remote; fase ini menghitung semua anggota sehingga tidak perlu role remote.
 Role awal tidak dapat dipastikan bila log mulai di tengah sesi/tidak lengkap. Tampilkan unknown atau minta kalibrasi role eksplisit melalui UI; jangan terus menampilkan status palsu.
 
