@@ -6,7 +6,8 @@ namespace TouchRpc.Infrastructure;
 public sealed record AppSettings(
     string? LogPath = null,
     string? LocalRoleId = null,
-    LocalRole ConfiguredRole = LocalRole.Unknown);
+    LocalRole ConfiguredRole = LocalRole.Unknown,
+    int AfkThresholdMinutes = 30);
 
 public sealed class AppSettingsStore
 {
@@ -61,6 +62,7 @@ public sealed class AppSettingsStore
         var roleId = settings.LocalRoleId;
         if (roleId is not null && !RoleId.IsValid(roleId)) roleId = null;
         var path = string.IsNullOrWhiteSpace(settings.LogPath) ? null : settings.LogPath.Trim();
-        return settings with { LogPath = path, LocalRoleId = roleId };
+        var thresholdMinutes = settings.AfkThresholdMinutes > 0 ? settings.AfkThresholdMinutes : 30;
+        return settings with { LogPath = path, LocalRoleId = roleId, AfkThresholdMinutes = thresholdMinutes };
     }
 }

@@ -74,6 +74,31 @@ public sealed class PresenceFormatterTests
         Assert.AreEqual(string.Empty, presence.State);
     }
 
+    [TestMethod]
+    public void AfkState_UsesRoleSpecificProductText()
+    {
+        var joinedClock = new TestMonotonicClock();
+        var joined = new TouchStateReducer(
+            configuredRole: LocalRole.Joined,
+            clock: joinedClock,
+            afkThreshold: TimeSpan.FromSeconds(1));
+        CompleteRoom(joined);
+        joinedClock.Advance(TimeSpan.FromSeconds(1));
+        joined.Tick();
+
+        var spectatorClock = new TestMonotonicClock();
+        var spectator = new TouchStateReducer(
+            configuredRole: LocalRole.Spectator,
+            clock: spectatorClock,
+            afkThreshold: TimeSpan.FromSeconds(1));
+        CompleteRoom(spectator);
+        spectatorClock.Advance(TimeSpan.FromSeconds(1));
+        spectator.Tick();
+
+        Assert.AreEqual("AFK · Waiting", PresenceFormatter.Format(joined.State).State);
+        Assert.AreEqual("AFK · Spectating", PresenceFormatter.Format(spectator.State).State);
+    }
+
     private static TouchStateReducer CreateWaitingRoom(params string[] members)
     {
         var reducer = new TouchStateReducer();
@@ -82,5 +107,13 @@ public sealed class PresenceFormatterTests
         foreach (var member in members) reducer.Apply(new MemberObserved(member, MemberEvidence.Snapshot));
         reducer.Apply(new WorldObserved(SessionPhase.Waiting));
         return reducer;
+    }
+
+    private static void CompleteRoom(TouchStateReducer reducer)
+    {
+        reducer.Apply(new RoomEntryRequested());
+        reducer.Apply(new RoomDetailsStarted());
+        reducer.Apply(new MemberObserved("10000000001", MemberEvidence.Snapshot));
+        reducer.Apply(new WorldObserved(SessionPhase.Waiting));
     }
 }

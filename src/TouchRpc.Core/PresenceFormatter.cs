@@ -13,7 +13,9 @@ public static class PresenceFormatter
 
         var presenceState = state.LocalRole switch
         {
+            LocalRole.Spectator when state.IsAfk => "AFK · Spectating",
             LocalRole.Spectator => "Spectating",
+            LocalRole.Joined when state.IsAfk => "AFK · Waiting",
             LocalRole.Joined when state.Phase == SessionPhase.Playing => "Smashing Key",
             LocalRole.Joined when state.Phase == SessionPhase.Loading => "Loading",
             LocalRole.Joined when state.Phase == SessionPhase.Results => "Viewing Results",

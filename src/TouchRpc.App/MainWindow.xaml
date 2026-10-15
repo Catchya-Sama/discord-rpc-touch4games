@@ -16,7 +16,7 @@
 
             <StackPanel Grid.Row="0" Margin="0,0,0,16">
                 <TextBlock Text="TOUCH RPC" FontSize="28" FontWeight="Bold" />
-                <TextBlock Text="P2 live log preview · Discord remains disabled" Foreground="#FF5F6470" />
+                <TextBlock Text="P3 live preview with 30-minute AFK lifecycle · Discord remains disabled" Foreground="#FF5F6470" />
             </StackPanel>
 
             <Border Grid.Row="1" Background="{StaticResource CardBackground}" CornerRadius="12" Padding="20" Margin="0,0,0,16">
@@ -94,6 +94,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Text="Phase" FontWeight="SemiBold" Margin="0,4,16,4" />
                         <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Phase}" Margin="0,4" />
@@ -103,6 +104,8 @@
                         <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Roster}" Margin="0,4" />
                         <TextBlock Grid.Row="3" Text="Diagnostic" FontWeight="SemiBold" Margin="0,4,16,4" />
                         <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Diagnostic}" Margin="0,4" />
+                        <TextBlock Grid.Row="4" Text="AFK" FontWeight="SemiBold" Margin="0,4,16,4" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding Afk}" Margin="0,4" TextWrapping="Wrap" />
                     </Grid>
                 </Grid>
             </Border>

@@ -26,6 +26,8 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private string _roleEvidence = "Unknown";
     private string _roster = "Unknown";
     private string _diagnostic = "None";
+    private string _afk = "Not tracking";
+    private int _afkThresholdMinutes = 30;
 
     public ObservableCollection<TouchProcessCandidate> ProcessCandidates { get; } = [];
 
@@ -91,6 +93,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public string RoleEvidence { get => _roleEvidence; private set => SetProperty(ref _roleEvidence, value); }
     public string Roster { get => _roster; private set => SetProperty(ref _roster, value); }
     public string Diagnostic { get => _diagnostic; private set => SetProperty(ref _diagnostic, value); }
+    public string Afk { get => _afk; private set => SetProperty(ref _afk, value); }
     public string DiscordStatus => "Disabled (P4)";
 
     public async Task InitializeAsync()
@@ -99,6 +102,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         LogPath = settings.LogPath ?? string.Empty;
         LocalRoleId = settings.LocalRoleId ?? string.Empty;
         ConfiguredRole = settings.ConfiguredRole;
+        _afkThresholdMinutes = settings.AfkThresholdMinutes;
         DetectProcesses();
     }
 
@@ -139,8 +143,12 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             return false;
         }
 
-        await _settingsStore.SaveAsync(new AppSettings(LogPath.Trim(), roleId, ConfiguredRole));
-        _session = new MonitoringSession(LogPath.Trim(), roleId, ConfiguredRole);
+        await _settingsStore.SaveAsync(new AppSettings(LogPath.Trim(), roleId, ConfiguredRole, _afkThresholdMinutes));
+        _session = new MonitoringSession(
+            LogPath.Trim(),
+            roleId,
+            ConfiguredRole,
+            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes));
         _monitorCancellation = new CancellationTokenSource();
         _followProcessLifecycle = SelectedProcess is not null;
         IsMonitoring = true;
@@ -184,7 +192,11 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                     {
                         SelectedProcess = candidates[0];
                         var roleId = string.IsNullOrWhiteSpace(LocalRoleId) ? null : LocalRoleId.Trim();
-                        _session = new MonitoringSession(LogPath.Trim(), roleId, ConfiguredRole);
+                        _session = new MonitoringSession(
+                            LogPath.Trim(),
+                            roleId,
+                            ConfiguredRole,
+                            afkThreshold: TimeSpan.FromMinutes(_afkThresholdMinutes));
                         SourceDiagnostic = "TouchClient restarted; monitoring opened a new session.";
                     }
                     else
@@ -221,6 +233,9 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             ? $"{snapshot.RosterCompleteness} · {count} unique member(s)"
             : snapshot.RosterCompleteness.ToString();
         Diagnostic = snapshot.Presence.Diagnostic.ToString();
+        Afk = snapshot.IsAfkTracking
+            ? $"{(snapshot.IsAfk ? "AFK" : "Counting")} · {FormatElapsed(snapshot.AfkElapsed)} · {snapshot.AfkTimerOrigin} · threshold {_afkThresholdMinutes}m"
+            : "Not tracking";
     }
 
     private static bool IsProcessRunning(int processId)
@@ -235,4 +250,7 @@ internal sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             return false;
         }
     }
+
+    private static string FormatElapsed(TimeSpan elapsed) =>
+        $"{(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00}";
 }

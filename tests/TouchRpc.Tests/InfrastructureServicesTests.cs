@@ -23,7 +23,7 @@ public sealed class InfrastructureServicesTests
         using var temporary = new TemporaryDirectory();
         var path = Path.Combine(temporary.Path, "settings.json");
         var store = new AppSettingsStore(path);
-        var expected = new AppSettings("C:\\Games\\Touch\\output_log.txt", "10000000001", LocalRole.Spectator);
+        var expected = new AppSettings("C:\\Games\\Touch\\output_log.txt", "10000000001", LocalRole.Spectator, 45);
 
         await store.SaveAsync(expected);
         var actual = await store.LoadAsync();
@@ -42,6 +42,19 @@ public sealed class InfrastructureServicesTests
 
         Assert.IsNull(actual.LocalRoleId);
         Assert.AreEqual(LocalRole.Joined, actual.ConfiguredRole);
+        Assert.AreEqual(30, actual.AfkThresholdMinutes);
+    }
+
+    [TestMethod]
+    public async Task SettingsStore_ReplacesNonPositiveAfkThresholdWithDefault()
+    {
+        using var temporary = new TemporaryDirectory();
+        var path = Path.Combine(temporary.Path, "settings.json");
+        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(new AppSettings(AfkThresholdMinutes: 0)));
+
+        var actual = await new AppSettingsStore(path).LoadAsync();
+
+        Assert.AreEqual(30, actual.AfkThresholdMinutes);
     }
 
     [TestMethod]

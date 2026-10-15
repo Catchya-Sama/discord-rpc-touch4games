@@ -71,3 +71,29 @@ Smoke test lokal: build Release, jalankan `TouchRpc.App.exe`, pastikan proses te
 8. Ulangi dengan instalasi non-default atau Browse. Jangan kirim raw log; kirim teks health/phase/role evidence/roster/diagnostic saja.
 
 Live hasil di atas tetap pending sampai dikonfirmasi pengguna pada game sebenarnya.
+
+## Pemeriksaan P3
+Clock test deterministik menguji:
+- perubahan tepat pada 29:59/30:00;
+- `AFK · Waiting` dan `AFK · Spectating` sesuai role;
+- Joined gameplay/PlayRoom membatalkan AFK dan WaitRoom memulai interval baru;
+- spectator tetap menghitung melalui gameplay, results dan kembali waiting;
+- role switch, ready, host/slot operation dan perubahan roster tidak mereset anchor;
+- local leave dan room baru membuat interval baru;
+- pending room tidak mengarang timer;
+- room terkonfirmasi dengan role unknown menghitung waktu tetapi tidak mengklaim AFK;
+- historical replay dimulai dari monitoring dengan diagnostic eksplisit;
+- truncate/rewrite same-length membuat session dan timer baru;
+- threshold non-positive ditolak di Core atau dinormalisasi settings ke 30 menit.
+
+### Protokol live P3 pengguna
+1. Jalankan preview dan pilih log seperti P2. Pastikan baris AFK menunjukkan `Counting`, origin, elapsed, dan threshold `30m` setelah room terkonfirmasi.
+2. Sebagai Joined, mulai gameplay. Expected: AFK menjadi `Not tracking` dan state `Smashing Key`.
+3. Kembali ke WaitRoom. Expected: timer dimulai lagi dari sekitar `00:00`.
+4. Sebagai Spectator, biarkan transisi gameplay → results → WaitRoom. Expected: elapsed tidak kembali ke nol.
+5. Lakukan ready/cancel, switch Join/Spec, perubahan slot atau aktivitas room. Expected: elapsed tidak reset.
+6. Untuk boundary produk 30 menit, expected state berubah tepat menjadi `AFK · Waiting` atau `AFK · Spectating`. Jangan mengubah clock sistem; runtime monotonic tidak bergantung jam dinding.
+7. Tutup/restart TOUCH atau ganti file session. Expected: timer lama hilang dan session baru dimulai tanpa membawa AFK lama.
+8. Kirim hanya Source Health, Phase, Role, Roster, AFK dan Diagnostic; jangan kirim raw log.
+
+Live P3 tetap pending sampai urutan di atas dikonfirmasi pada TOUCH sebenarnya. Automated tests memakai threshold pendek hanya untuk mempercepat test dan selalu diberi label test.

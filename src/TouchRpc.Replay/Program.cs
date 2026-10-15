@@ -14,9 +14,11 @@ static int Run(string[] args)
     try
     {
         var parser = new TouchLogParser();
-        var reducer = new TouchStateReducer(options.LocalRoleId, options.ConfiguredRole);
+        var reducer = new TouchStateReducer(options.LocalRoleId, options.ConfiguredRole, new ReplayClock());
+        reducer.BeginHistoricalReplay();
         foreach (var line in File.ReadLines(options.Path))
             reducer.Replay(parser.ParseLine(line));
+        reducer.EndHistoricalReplay();
 
         var state = reducer.State;
         var presence = PresenceFormatter.Format(state);
@@ -25,6 +27,7 @@ static int Run(string[] args)
         Console.WriteLine($"Phase: {state.Phase}");
         Console.WriteLine($"Local role: {state.LocalRole} ({state.RoleEvidence})");
         Console.WriteLine($"Roster: {state.RosterCompleteness}");
+        Console.WriteLine($"AFK: {(state.IsAfkTracking ? $"Counting from {state.AfkTimerOrigin}" : "Not tracking")}");
         Console.WriteLine($"Diagnostic: {presence.Diagnostic}");
         return 0;
     }
@@ -38,6 +41,13 @@ static int Run(string[] args)
         Console.Error.WriteLine("The replay file is not accessible.");
         return 1;
     }
+}
+
+internal sealed class ReplayClock : IMonotonicClock
+{
+    public long GetTimestamp() => 0;
+
+    public TimeSpan GetElapsedTime(long startingTimestamp, long endingTimestamp) => TimeSpan.Zero;
 }
 
 internal sealed record ReplayOptions(string Path, string? LocalRoleId, LocalRole ConfiguredRole)

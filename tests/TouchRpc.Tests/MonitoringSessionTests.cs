@@ -53,6 +53,58 @@ public sealed class MonitoringSessionTests
         Assert.AreEqual("1 Player Joined", snapshot.Presence.Details);
     }
 
+    [TestMethod]
+    public async Task InitialHistory_StartsAfkAtMonitoringAndPollAdvancesIt()
+    {
+        using var temporary = new TemporaryLog(string.Join("\n",
+        [
+            "_OnCmd_RoomEnter_Re", "_OnCmd_RoomDetailInfo_Re",
+            "RoomMemer: 10000000001", "the_current_world Type=WaitRoom", string.Empty,
+        ]));
+        var clock = new TestMonotonicClock();
+        var session = new MonitoringSession(
+            temporary.Path,
+            configuredRole: LocalRole.Joined,
+            clock: clock,
+            afkThreshold: TimeSpan.FromSeconds(5));
+
+        var initial = await session.PollAsync();
+        Assert.AreEqual(AfkTimerOrigin.MonitoringStarted, initial.AfkTimerOrigin);
+        Assert.AreEqual(DiagnosticCode.AfkHistoryUnavailable, initial.Presence.Diagnostic);
+        Assert.IsFalse(initial.IsAfk);
+
+        clock.Advance(TimeSpan.FromSeconds(5));
+        var elapsed = await session.PollAsync();
+        Assert.IsTrue(elapsed.IsAfk);
+        Assert.AreEqual("AFK · Waiting", elapsed.Presence.State);
+    }
+
+    [TestMethod]
+    public async Task Truncate_StartsFreshAfkIntervalInsteadOfKeepingElapsedTime()
+    {
+        const string RoomLog = "_OnCmd_RoomEnter_Re\n_OnCmd_RoomDetailInfo_Re\nRoomMemer: 10000000001\nthe_current_world Type=WaitRoom\n";
+        using var temporary = new TemporaryLog(RoomLog);
+        var clock = new TestMonotonicClock();
+        var session = new MonitoringSession(
+            temporary.Path,
+            configuredRole: LocalRole.Spectator,
+            clock: clock,
+            afkThreshold: TimeSpan.FromSeconds(5));
+        _ = await session.PollAsync();
+        clock.Advance(TimeSpan.FromSeconds(5));
+        var afk = await session.PollAsync();
+        Assert.IsTrue(afk.IsAfk);
+
+        var rewrittenRoomLog = RoomLog.Replace("10000000001", "10000000002", StringComparison.Ordinal);
+        await File.WriteAllTextAsync(temporary.Path, rewrittenRoomLog, new UTF8Encoding(false));
+        var restarted = await session.PollAsync();
+
+        Assert.IsTrue(restarted.NewSession);
+        Assert.IsFalse(restarted.IsAfk);
+        Assert.AreEqual(TimeSpan.Zero, restarted.AfkElapsed);
+        Assert.AreEqual(AfkTimerOrigin.MonitoringStarted, restarted.AfkTimerOrigin);
+    }
+
     private sealed class TemporaryLog : IDisposable
     {
         private readonly string _directory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"touch-rpc-{Guid.NewGuid():N}");

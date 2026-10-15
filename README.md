@@ -1,6 +1,6 @@
 # TOUCH RPC
-Tanggal keputusan: 15 Oktober 2026. Implementasi lokal P2 tersedia:
-Core parser, live log reader, path detection/fallback Browse, settings lokal, dan preview Windows. Verifikasi live dengan game masih pending.
+Tanggal keputusan: 15 Oktober 2026. Implementasi lokal P3 tersedia:
+Core parser, live log reader, path detection/fallback Browse, lifecycle AFK monotonic, settings lokal, dan preview Windows. Verifikasi live dengan game masih pending.
 
 Project Owner: Bongbong (xooty).
 Target: Software pendamping Windows, C# .NET, sumber data log local file TOUCH, keluaran Discord Rich Presence.
@@ -51,9 +51,9 @@ dotnet run --project src/TouchRpc.Replay -c Release -- `
 
 Console hanya menampilkan state akhir dan diagnostik terpilih. Console tidak mencetak raw line, chat, nama anggota, atau daftar role ID. Parameter `--role joined|spectator` dapat dipakai untuk kalibrasi eksplisit saat bukti role dari log tidak lengkap.
 
-Console replay P1 tetap tersedia untuk diagnosis offline. P2 menambahkan monitoring live dan preview Windows; AFK, tray dan Discord belum dibuat.
+Console replay tetap tersedia untuk diagnosis offline. History log tidak dipakai untuk mengarang durasi AFK; timer replay dimulai dari monitoring dengan diagnostic eksplisit.
 
-## Menjalankan preview Windows P2
+## Menjalankan preview Windows P3
 ```powershell
 & "$env:LOCALAPPDATA\Microsoft\dotnet\dotnet.exe" run --project src/TouchRpc.App -c Release
 ```
@@ -65,8 +65,12 @@ Alur penggunaan:
 4. Gunakan role calibration hanya jika bukti role dari log tidak lengkap.
 5. Klik **Start monitoring** dan periksa Source Health serta Presence Preview.
 
+AFK berarti 30 menit berada di room tanpa mulai bermain sebagai peserta Joined. Ini bukan deteksi input Windows. Spectator tetap menghitung selama gameplay/results; ready, chat, aktivitas anggota lain, host transfer, slot changes, dan role switch tidak mereset timer. Joined yang mulai bermain membatalkan AFK dan interval baru dimulai saat kembali ke WaitRoom.
+
+Preview menampilkan elapsed AFK, origin timer, dan diagnostic. Jika monitoring dimulai dari log yang sudah berisi history room, timer dimulai saat monitoring karena durasi monotonic sebelumnya tidak tersedia. Threshold pendek hanya digunakan di automated tests dan bukan default runtime.
+
 Settings disimpan di `%LocalAppData%\TouchRpc\settings.json`, bukan di repository atau folder game. Raw log hanya dibaca dan tidak disalin.
 
-P2 belum mencakup AFK, tray atau Discord. Status Discord di preview sengaja tetap `Disabled (P4)`.
+P3 belum mencakup tray atau Discord. Status Discord di preview sengaja tetap `Disabled (P4)`.
 
 Yayyy itu step awal nya gengggg. kalo bisa yaudah

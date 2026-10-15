@@ -13,6 +13,10 @@ public sealed class TouchState
     public bool RoomDetailsSeen { get; internal set; }
     public bool MidgameEntrySeen { get; internal set; }
     public DiagnosticCode Diagnostic { get; internal set; } = DiagnosticCode.None;
+    public bool IsAfkTracking { get; internal set; }
+    public bool IsAfk { get; internal set; }
+    public TimeSpan AfkElapsed { get; internal set; }
+    public AfkTimerOrigin AfkTimerOrigin { get; internal set; } = AfkTimerOrigin.None;
     public int UniqueMemberCount => _members.Count;
     public IReadOnlyCollection<string> Members => _members;
 

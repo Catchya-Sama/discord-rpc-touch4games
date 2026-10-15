@@ -8,7 +8,7 @@
 - Path detection dan role ID otomatis belum diuji untuk pengguna lain.
 
 ## Fase aktif berikutnya
-P2: live log, path detection dan preview Windows sudah diimplementasikan secara lokal; live game verification masih pending. Jangan mulai P3 sebelum hasil P2 direview.
+P3: AFK dan lifecycle sudah diimplementasikan secara lokal; live game verification masih pending. Jangan mulai P4 sebelum hasil P3 direview.
 
 ## 15 Oktober 2026 / P0 / main
 Perubahan:
@@ -103,6 +103,39 @@ Risiko atau unknown:
 Push status: dicatat pada laporan fase setelah commit/push.
 
 Langkah berikutnya: pengguna menjalankan protokol live P2 dan mengirim diagnostics teredaksi. P3 AFK tidak dimulai sampai review P2.
+
+## 15 Oktober 2026 / P3 / main
+Perubahan:
+- Ditambahkan monotonic clock injectable, default AFK 30 menit, timer origin/elapsed/tracking dan presence `AFK · Waiting`/`AFK · Spectating`.
+- Joined gameplay atau PlayRoom menghentikan timer; interval baru dimulai saat kembali WaitRoom. Spectator tetap menghitung melalui gameplay/results/waiting.
+- Ready, role switch, host/slot operation dan perubahan roster tidak mereset timer. Lobby, local leave dan session file baru membersihkan timer.
+- Historical replay tidak merekonstruksi durasi tanpa bukti; timer dimulai dari monitoring dan diagnostic menyatakan history tidak tersedia.
+- Preview WPF menampilkan elapsed, origin, threshold dan status AFK. Settings menyimpan threshold positif dengan default 30 menit.
+- Reader diperkuat untuk mendeteksi rewrite in-place dengan ukuran sama agar state/AFK lama tidak terbawa.
+
+Keputusan + alasan:
+- Runtime memakai `Stopwatch` melalui interface Core agar perubahan jam sistem tidak memengaruhi AFK dan test tetap deterministik.
+- Role unknown tidak pernah menghasilkan teks AFK. Setelah threshold, diagnostic `AfkRoleUnknown` menjelaskan bahwa keputusan tidak dapat dibuat.
+- Threshold pendek hanya digunakan oleh automated tests; runtime dan persisted default tetap 30 menit.
+- Initial log history tidak dianggap sebagai elapsed AFK karena timestamp monotonic sebelum aplikasi berjalan tidak tersedia.
+
+Pemeriksaan dijalankan dan hasil:
+- Formatter verification dan Release build dengan warnings-as-errors lulus.
+- Automated tests: 50 passed, 0 failed, 0 skipped.
+- Replay fixture menghasilkan presence lama yang sama dan menambahkan AFK origin/diagnostic teredaksi.
+- Regression rewrite same-length sempat menemukan defect reader; prefix probe/last-write marker ditambahkan dan test kemudian lulus.
+
+Live verification: pending — boundary 30 menit dan transisi Joined/Spectator belum dikonfirmasi pada TOUCH nyata.
+
+Risiko atau unknown:
+- Marker live gameplay/results tetap bergantung format log yang tidak merupakan API stabil.
+- Start monitoring di tengah room sengaja mulai elapsed dari nol dan tidak mengklaim waktu sebelum monitoring.
+- Role ID manual/kalibrasi masih dibutuhkan bila bukti role lokal tidak lengkap.
+- Discord, tray dan packaging belum diimplementasikan.
+
+Push status: dicatat pada laporan fase setelah commit/push.
+
+Langkah berikutnya: pengguna menjalankan protokol live P3. P4 Discord tidak dimulai sampai review P3.
 
 ## Format update fase
 Tanggal / fase / branch:

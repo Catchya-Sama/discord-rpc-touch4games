@@ -73,6 +73,20 @@ public sealed class LiveLogReaderTests
     }
 
     [TestMethod]
+    public async Task SameLengthInPlaceRewrite_StartsNewSession()
+    {
+        using var temporary = new TemporaryLog("old-value\n");
+        var reader = new LiveLogReader(temporary.Path);
+        _ = await reader.ReadAvailableAsync();
+
+        await temporary.ReplaceContentsAsync("new-value\n");
+        var reset = await reader.ReadAvailableAsync();
+
+        Assert.IsTrue(reset.NewSession);
+        CollectionAssert.AreEqual(new[] { "new-value" }, reset.Lines.ToArray());
+    }
+
+    [TestMethod]
     public async Task MissingFile_ReturnsMissingHealthWithoutThrowing()
     {
         var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"touch-rpc-{Guid.NewGuid():N}.log");

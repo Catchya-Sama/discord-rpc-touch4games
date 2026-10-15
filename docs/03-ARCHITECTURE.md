@@ -10,7 +10,7 @@ Struktur yang dituju (boleh sederhanakan jumlah project sesuai fase):
 - tests/TouchRpc.Tests: synthetic fixtures, replay dan unit tests bermakna.
 - docs: spesifikasi dan progres.
 
-Struktur aktual P2 terdiri dari `TouchRpc.Core`, `TouchRpc.Infrastructure`, `TouchRpc.Replay`, `TouchRpc.App`, dan `TouchRpc.Tests`. Core dan Infrastructure tidak memiliki package runtime pihak ketiga. App menggunakan WPF bawaan Windows/.NET. Test menggunakan MSTest 4.0.2 dari template SDK .NET 10.
+Struktur aktual P3 terdiri dari `TouchRpc.Core`, `TouchRpc.Infrastructure`, `TouchRpc.Replay`, `TouchRpc.App`, dan `TouchRpc.Tests`. Core dan Infrastructure tidak memiliki package runtime pihak ketiga. App menggunakan WPF bawaan Windows/.NET. Test menggunakan MSTest 4.0.2 dari template SDK .NET 10.
 
 Replay menerima path file, character role ID manual opsional, dan kalibrasi role opsional. Output dibatasi ke presence final, phase, role/evidence, roster completeness dan diagnostic code; raw line dan daftar ID tidak dicetak.
 
@@ -30,6 +30,15 @@ Initial replay diproses sebagai satu batch dan preview hanya menerima snapshot s
 Process detector mencari `TouchClient.exe`, lalu membentuk path relatif `TouchClient_Data/output_log.txt` dari executable directory. Jika process path ditolak OS atau terdapat beberapa client, UI tidak menebak: pengguna memilih proses secara eksplisit atau memakai Browse. Settings path/role disimpan sebagai JSON di LocalAppData dengan write atomik.
 
 Monitoring yang dimulai dari process selection mengikuti lifecycle proses. Saat PID keluar, preview dibersihkan menjadi GameClosed tetapi loop tetap menunggu. Satu instance baru dapat dihubungkan kembali sebagai session baru; beberapa instance tetap membutuhkan pilihan eksplisit dan tidak dicampur.
+
+P3 menambahkan prefix probe dan last-write marker pada reader. Ini membedakan append normal dari truncate/rewrite in-place, termasuk rewrite dengan ukuran akhir sama, sehingga state roster dan AFK lama tidak terbawa ke session file baru.
+
+## AFK clock
+Core menerima `IMonotonicClock`; runtime menggunakan `Stopwatch` dan test/replay memakai clock deterministik. Default threshold adalah 30 menit dan disimpan sebagai menit positif di LocalAppData settings. Nilai non-positive dinormalisasi ke default.
+
+Timer dimulai setelah room terkonfirmasi, bukan hanya request pending. Joined yang masuk `PlayRoom` atau menerima gameplay marker menghentikan timer. Setelah gameplay Joined, interval baru dimulai saat kembali `WaitRoom`. Spectator terus menghitung melalui playing/results/waiting. Role switch, ready, host/slot operation dan perubahan roster tidak mengubah anchor. Lobby/local leave/session file baru membersihkan timer.
+
+Historical replay tidak memiliki bukti monotonic untuk durasi sebelum monitoring. Reducer menandai origin `MonitoringStarted` dan diagnostic `AfkHistoryUnavailable`; elapsed dimulai nol. Jika room terkonfirmasi tetapi role tetap unknown sampai threshold, diagnostic menjadi `AfkRoleUnknown` dan presence tidak mengklaim AFK.
 
 ## Roster
 Snapshot entry mengganti daftar, bukan menggabungkan anggota room lama. Gunakan batas snapshot terverifikasi dari fixture; pending RoomEnter tidak dianggap sukses sampai balasan.
