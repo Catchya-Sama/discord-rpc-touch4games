@@ -5,15 +5,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
-if ($null -eq $dotnet) {
-    $localDotnet = Join-Path $env:LOCALAPPDATA "Microsoft\dotnet\dotnet.exe"
-    if (-not (Test-Path $localDotnet)) {
-        throw "The .NET SDK was not found on PATH or in the user-local installation."
-    }
+$localDotnet = Join-Path $env:LOCALAPPDATA "Microsoft\dotnet\dotnet.exe"
+if (Test-Path $localDotnet) {
     $dotnetPath = $localDotnet
 }
 else {
+    $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
+    if ($null -eq $dotnet) {
+        throw "The .NET SDK was not found on PATH or in the user-local installation."
+    }
     $dotnetPath = $dotnet.Source
 }
 

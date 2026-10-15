@@ -1,16 +1,7 @@
 using System.Text.Json;
-using TouchRpc.Core;
-
 namespace TouchRpc.Infrastructure;
 
-public sealed record AppSettings(
-    string? LogPath = null,
-    string? LocalRoleId = null,
-    LocalRole ConfiguredRole = LocalRole.Unknown,
-    int AfkThresholdMinutes = 30,
-    string? DiscordApplicationId = null,
-    string? DiscordLargeImageKey = null,
-    bool MinimizeToTray = true);
+public sealed record AppSettings(bool Enabled = true);
 
 public sealed class AppSettingsStore
 {
@@ -62,23 +53,7 @@ public sealed class AppSettingsStore
 
     private static AppSettings Normalize(AppSettings settings)
     {
-        var roleId = settings.LocalRoleId;
-        if (roleId is not null && !RoleId.IsValid(roleId)) roleId = null;
-        var path = string.IsNullOrWhiteSpace(settings.LogPath) ? null : settings.LogPath.Trim();
-        var thresholdMinutes = settings.AfkThresholdMinutes > 0 ? settings.AfkThresholdMinutes : 30;
-        var discordApplicationId = NormalizeDiscordApplicationId(settings.DiscordApplicationId);
-        var discordLargeImageKey = string.IsNullOrWhiteSpace(settings.DiscordLargeImageKey)
-            ? null
-            : settings.DiscordLargeImageKey.Trim();
-        if (discordLargeImageKey?.Length > 256) discordLargeImageKey = discordLargeImageKey[..256];
-        return settings with
-        {
-            LogPath = path,
-            LocalRoleId = roleId,
-            AfkThresholdMinutes = thresholdMinutes,
-            DiscordApplicationId = discordApplicationId,
-            DiscordLargeImageKey = discordLargeImageKey,
-        };
+        return settings;
     }
 
     public static string? NormalizeDiscordApplicationId(string? applicationId)

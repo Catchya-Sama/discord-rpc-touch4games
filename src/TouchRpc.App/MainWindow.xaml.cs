@@ -1,97 +1,93 @@
-﻿using System.ComponentModel;
-using System.Drawing;
+﻿using System.Drawing;
+using System.ComponentModel;
 using System.Windows;
-using Microsoft.Win32;
 using Forms = System.Windows.Forms;
 
 namespace TouchRpc.App;
 
 public partial class MainWindow : Window
 {
-    private readonly MainWindowViewModel _viewModel = new();
+    private readonly TrayRuntime _runtime = new();
     private readonly Forms.NotifyIcon _trayIcon;
-    private bool _exitRequested;
+    private bool _initialized;
+    private bool _exiting;
 
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = _viewModel;
         var trayMenu = new Forms.ContextMenuStrip();
-        trayMenu.Items.Add("Open TOUCH RPC", null, (_, _) => ShowFromTray());
         trayMenu.Items.Add("Exit", null, async (_, _) => await ExitAsync());
         _trayIcon = new Forms.NotifyIcon
         {
             ContextMenuStrip = trayMenu,
             Icon = SystemIcons.Application,
-            Text = "TOUCH RPC",
+            Text = "TOUCH RPC · Starting",
             Visible = true,
         };
-        _trayIcon.DoubleClick += (_, _) => ShowFromTray();
+        _trayIcon.MouseClick += TrayIcon_MouseClick;
+        _runtime.StatusChanged += Runtime_StatusChanged;
+        Dispatcher.BeginInvoke(async () => await InitializeAsync());
     }
 
-    private async void Window_Loaded(object sender, RoutedEventArgs e) => await _viewModel.InitializeAsync();
-
-    private async void Window_Closing(object? sender, CancelEventArgs e)
+    private async Task InitializeAsync()
     {
-        if (_exitRequested) return;
+        if (_initialized) return;
+        _initialized = true;
+        await _runtime.InitializeAsync();
+        EnabledSwitch.IsChecked = _runtime.IsEnabled;
+        Hide();
+    }
 
+    private void TrayIcon_MouseClick(object? sender, Forms.MouseEventArgs e)
+    {
+        if (e.Button != Forms.MouseButtons.Left) return;
+        Dispatcher.Invoke(() =>
+        {
+            if (IsVisible)
+            {
+                Hide();
+                return;
+            }
+
+            var workArea = SystemParameters.WorkArea;
+            Left = Math.Min(workArea.Right - Width, Forms.Cursor.Position.X - Width / 2);
+            Top = workArea.Bottom - Height - 8;
+            Show();
+            Activate();
+        });
+    }
+
+    private async void EnabledSwitch_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_initialized) return;
+        await _runtime.SetEnabledAsync(EnabledSwitch.IsChecked == true);
+    }
+
+    private void Window_Deactivated(object sender, EventArgs e) => Hide();
+
+    private void Window_Closing(object? sender, CancelEventArgs e)
+    {
+        if (_exiting) return;
         e.Cancel = true;
-        if (_viewModel.MinimizeToTray)
-        {
-            Hide();
-            await _viewModel.SaveSettingsAsync();
-            return;
-        }
-
-        await ShutdownAsync();
+        Hide();
     }
 
-    private void Detect_Click(object sender, RoutedEventArgs e) => _viewModel.DetectProcesses();
-
-    private void Browse_Click(object sender, RoutedEventArgs e)
+    private void Runtime_StatusChanged(object? sender, string status)
     {
-        var dialog = new Microsoft.Win32.OpenFileDialog
+        Dispatcher.BeginInvoke(() =>
         {
-            Title = "Select TOUCH output_log.txt",
-            Filter = "TOUCH log (output_log.txt)|output_log.txt|Text files (*.txt)|*.txt|All files (*.*)|*.*",
-            CheckFileExists = true,
-            Multiselect = false,
-        };
-
-        if (dialog.ShowDialog(this) == true) _viewModel.LogPath = dialog.FileName;
-    }
-
-    private async void Start_Click(object sender, RoutedEventArgs e) => await _viewModel.StartAsync();
-
-    private void Stop_Click(object sender, RoutedEventArgs e) => _viewModel.Stop();
-
-    private void ShowFromTray()
-    {
-        Show();
-        WindowState = WindowState.Normal;
-        Activate();
+            var tooltip = $"TOUCH RPC · {status}";
+            _trayIcon.Text = tooltip.Length <= 63 ? tooltip : tooltip[..63];
+        });
     }
 
     private async Task ExitAsync()
     {
-        if (!Dispatcher.CheckAccess())
-        {
-            await await Dispatcher.InvokeAsync(ExitAsync);
-            return;
-        }
-
-        await ShutdownAsync();
-    }
-
-    private async Task ShutdownAsync()
-    {
-        if (_exitRequested) return;
-
-        _exitRequested = true;
-        await _viewModel.SaveSettingsAsync();
-        await _viewModel.DisposeAsync();
+        if (_exiting) return;
+        _exiting = true;
+        await _runtime.DisposeAsync();
         _trayIcon.Visible = false;
         _trayIcon.Dispose();
-        Close();
+        System.Windows.Application.Current.Shutdown();
     }
 }

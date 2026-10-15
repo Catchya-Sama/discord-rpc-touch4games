@@ -26,11 +26,11 @@ Definisi produk: tidak mulai bermain sebagai peserta selama 30 menit di room. Bu
 - Runtime gunakan monotonic clock. Replay gunakan clock yang bisa diinjeksi. Unknown role jangan diperlakukan sebagai peserta; tampilkan diagnostik jika AFK tidak dapat ditentukan.
 
 ## Pengaturan dan UX
-Detect otomatis dari proses TouchClient.exe → folder executable → TouchClient_Data/output_log.txt. Path D:/Touch hanya contoh, bukan konstanta.
-Browse via file picker; validasi ada, bisa dibaca, format masuk akal. Tidak ada event baru bukan berarti path salah.
-Simpan path lokal, pilihan role ID, preferensi tray dan threshold default 30 menit. Config pengguna di LocalAppData, bukan folder game/repo.
-Jangan wajib admin: jika akses process path gagal, fallback Browse. Tangani beberapa client dengan pilihan eksplisit, jangan mencampur log.
-Status UI: log missing/unreadable/valid waiting/receiving; Discord disabled/connecting/connected/disconnected. Pisahkan keduanya.
+Deteksi otomatis dari proses TouchClient.exe → folder executable → TouchClient_Data/output_log.txt. Path D:/Touch hanya contoh, bukan konstanta. Gunakan fallback Windows limited process query bila `MainModule` ditolak.
+Tidak ada input path, Application ID, asset key, Role ID, nickname, atau role calibration pada rilis pengguna. Public Discord project configuration dibundle; secret/token tidak digunakan.
+Aplikasi startup tanpa dashboard dan berada di notification area. Klik kiri membuka popup sakelar Enable/Disable; klik kanan menyediakan Exit. Disabled menghentikan monitoring dan membersihkan presence.
+Installer per-user tidak wajib admin, menjalankan aplikasi setelah install, dan mendaftarkan startup saat login Windows. Config pengguna di LocalAppData hanya menyimpan preferensi Enabled/Disabled.
+Jika beberapa client ditemukan, jangan mencampur atau memilih log secara arbitrer. Status ringkas tersedia melalui tooltip ikon tray.
 
 ## Identitas nickname dan tooltip aset
 - `LocalNickname` adalah nickname karakter pemilik client, bukan nama anggota room pertama, `ElsePlayerName` terakhir, launcher userid, atau nilai hard-coded.
@@ -42,8 +42,7 @@ Status UI: log missing/unreadable/valid waiting/receiving; Discord disabled/conn
 - P3 hanya menyiapkan data/preview. Hover logo Discord dan pengiriman `LargeText` baru diuji pada P4.
 
 ## Discord Rich Presence
-- Discord opsional. Tanpa Application ID, preview/log monitoring tetap berjalan dan status Discord adalah `Disabled`.
-- Konfigurasi lokal hanya membutuhkan public Application ID dan optional large image asset key. Client Secret, user token, bot token dan OAuth login tidak digunakan.
+- Public Application ID dan large image asset key proyek dibundle untuk distribusi siap pakai. Client Secret, user token, bot token dan OAuth login tidak digunakan.
 - Payload hanya mengirim Details, State, large image asset key dan kandidat nickname tooltip sebagai `assets.large_text`. Sampai sumber nickname otomatis terverifikasi tersedia, tooltip adalah `TOUCH`.
 - Jangan kirim role ID, launcher userid, daftar/nama anggota, raw log, chat, signature/login field, party capacity fiktif atau join/spectate secret.
 - Payload identik tidak dikirim ulang. Ketika Discord reconnect, kirim latest state saja dan jangan replay backlog.

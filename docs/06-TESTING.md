@@ -129,13 +129,23 @@ Automated tests memakai fake transport dan menguji:
 4. Gunakan Discord desktop, login, dan pastikan activity status/sharing tidak dinonaktifkan.
 
 ### Protokol live P4 pengguna
-1. Urutan startup A: buka Discord desktop terlebih dahulu, lalu preview TOUCH RPC. Isi Application ID/asset key, pilih log dan Start monitoring. Expected: status `Connected`, activity muncul, Details/State sama dengan preview.
+1. Urutan startup A: buka Discord desktop terlebih dahulu, lalu TOUCH RPC dan TOUCH. Expected: aplikasi tray mendeteksi log otomatis dan activity muncul tanpa input konfigurasi.
 2. Hover large image. Expected untuk rilis pertama: tooltip `TOUCH`. Nickname hanya boleh muncul bila kelak tersedia mapping otomatis terverifikasi. Jika asset key kosong atau belum tersedia di application, large image/hover memang tidak tampil.
 3. Uji Lobby → Waiting → Smashing Key → Spectating/AFK yang tersedia. Catat waktu preview berubah dan waktu Discord terlihat berubah; target observasi 2–5 detik.
 4. Tutup Discord saat monitoring. Expected: status menjadi Disconnected. Ubah state game bila memungkinkan, buka Discord kembali, dan pastikan hanya state terbaru yang muncul.
-5. Urutan startup B: jalankan preview dan Start monitoring ketika Discord tertutup, lalu buka Discord. Expected: reconnect dan latest state saja yang muncul.
+5. Urutan startup B: jalankan TOUCH RPC dan TOUCH ketika Discord tertutup, lalu buka Discord. Expected: reconnect dan latest state saja yang muncul.
 6. Klik Stop. Expected: Rich Presence dibersihkan. Start kembali harus menerbitkan state terbaru, bukan state sebelum Stop.
 7. Bila monitoring mengikuti proses, tutup TOUCH. Expected: source `GameClosed` dan Rich Presence dibersihkan. Buka TOUCH kembali; expected session baru dan latest presence setelah log tersedia.
 8. Kirim hasil status/Details/State/tooltip dan waktu observasi saja. Jangan kirim settings.json, raw log, Application Client Secret atau token.
 
-Live pengguna telah mengonfirmasi Discord activity untuk lobby, room count, waiting, spectator-in-room dan playing, serta jalur hover tooltip saat input manual masih tersedia. Restart Discord, dua urutan startup, clear nyata dan target 2–5 detik belum dirinci per kasus, sehingga tetap pending. Laporan bahwa spectator saat gameplay pernah menampilkan `Smashing Key` belum direproduksi; expected tetap `Spectating` dan kasus ini belum ditandai pass.
+Live pengguna pada 15 Oktober 2026 mengonfirmasi seluruh display Discord yang dicoba berfungsi benar, termasuk lobby, room count, waiting, playing, tooltip, dan spectator saat gameplay yang tampil `Spectating`—bukan `Smashing Key`. Acceptance tray-only baru tetap memerlukan install bersih, startup login, Enable/Disable, Exit, restart Discord, dan clean-machine detection.
+
+### Protokol installer/tray-only
+1. Pada perangkat tanpa settings TOUCH RPC lama, jalankan MSI. Expected: tidak meminta admin, aplikasi langsung muncul di notification area, dan tidak membuka dashboard.
+2. Pastikan tidak ada input path/Application ID/asset key/Role ID. Klik kiri ikon; expected hanya popup sakelar Enable/Disable.
+3. Dengan sakelar Enabled, uji TOUCH dibuka sebelum dan sesudah TOUCH RPC. Expected: log ditemukan otomatis dan activity muncul tanpa input pengguna.
+4. Set Disabled. Expected: presence dibersihkan dan tidak kembali saat game berubah. Enable kembali; expected latest state muncul.
+5. Klik kanan → Exit. Expected: proses berhenti dan presence dibersihkan.
+6. Login ulang Windows. Expected: satu instance TOUCH RPC berjalan di tray dan preferensi Enabled/Disabled terakhir dipertahankan.
+7. Jalankan EXE kedua. Expected: single-instance guard menutup instance kedua.
+8. Uninstall. Expected: file program dan startup login TOUCH RPC dihapus.

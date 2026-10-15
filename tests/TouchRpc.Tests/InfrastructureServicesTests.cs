@@ -1,4 +1,3 @@
-using System.Text.Json;
 using TouchRpc.Core;
 using TouchRpc.Infrastructure;
 
@@ -18,19 +17,12 @@ public sealed class InfrastructureServicesTests
     }
 
     [TestMethod]
-    public async Task SettingsStore_RoundTripsLocalSettingsOutsideRepository()
+    public async Task SettingsStore_RoundTripsEnabledPreferenceOutsideRepository()
     {
         using var temporary = new TemporaryDirectory();
         var path = Path.Combine(temporary.Path, "settings.json");
         var store = new AppSettingsStore(path);
-        var expected = new AppSettings(
-            LogPath: "C:\\Games\\Touch\\output_log.txt",
-            LocalRoleId: "10000000001",
-            ConfiguredRole: LocalRole.Spectator,
-            AfkThresholdMinutes: 45,
-            DiscordApplicationId: "123456789012345678",
-            DiscordLargeImageKey: "touch-logo",
-            MinimizeToTray: false);
+        var expected = new AppSettings(Enabled: false);
 
         await store.SaveAsync(expected);
         var actual = await store.LoadAsync();
@@ -39,29 +31,34 @@ public sealed class InfrastructureServicesTests
     }
 
     [TestMethod]
-    public async Task SettingsStore_DropsInvalidRoleId()
+    public async Task SettingsStore_IgnoresLegacyManualConfiguration()
     {
         using var temporary = new TemporaryDirectory();
         var path = Path.Combine(temporary.Path, "settings.json");
-        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(new AppSettings(null, "launcher-user", LocalRole.Joined)));
+        await File.WriteAllTextAsync(path, """
+            {
+              "LogPath": "C:\\Games\\Touch\\output_log.txt",
+              "LocalRoleId": "10000000001",
+              "ConfiguredRole": 1,
+              "DiscordApplicationId": "123456789012345678",
+              "DiscordLargeImageKey": "logo",
+              "Enabled": false
+            }
+            """);
 
         var actual = await new AppSettingsStore(path).LoadAsync();
 
-        Assert.IsNull(actual.LocalRoleId);
-        Assert.AreEqual(LocalRole.Joined, actual.ConfiguredRole);
-        Assert.AreEqual(30, actual.AfkThresholdMinutes);
+        Assert.IsFalse(actual.Enabled);
     }
 
     [TestMethod]
-    public async Task SettingsStore_ReplacesNonPositiveAfkThresholdWithDefault()
+    public async Task SettingsStore_DefaultsToEnabledWhenNoFileExists()
     {
         using var temporary = new TemporaryDirectory();
         var path = Path.Combine(temporary.Path, "settings.json");
-        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(new AppSettings(AfkThresholdMinutes: 0)));
-
         var actual = await new AppSettingsStore(path).LoadAsync();
 
-        Assert.AreEqual(30, actual.AfkThresholdMinutes);
+        Assert.IsTrue(actual.Enabled);
     }
 
     [TestMethod]
@@ -82,28 +79,16 @@ public sealed class InfrastructureServicesTests
         await store.SaveAsync(actual);
         var migratedJson = await File.ReadAllTextAsync(path);
 
-        Assert.AreEqual("C:\\Games\\Touch\\output_log.txt", actual.LogPath);
-        Assert.IsTrue(actual.MinimizeToTray);
+        Assert.IsTrue(actual.Enabled);
         Assert.DoesNotContain("ManualNickname", migratedJson, StringComparison.Ordinal);
+        Assert.DoesNotContain("LogPath", migratedJson, StringComparison.Ordinal);
     }
 
     [TestMethod]
-    public async Task SettingsStore_NormalizesDiscordConfiguration()
+    public void DiscordApplicationId_NormalizationRemainsAvailableForTransportValidation()
     {
-        using var temporary = new TemporaryDirectory();
-        var path = Path.Combine(temporary.Path, "settings.json");
-        var store = new AppSettingsStore(path);
-
-        await store.SaveAsync(new AppSettings(
-            DiscordApplicationId: " 123456789012345678 ",
-            DiscordLargeImageKey: " touch-logo "));
-        var valid = await store.LoadAsync();
-        await store.SaveAsync(new AppSettings(DiscordApplicationId: "not-an-id"));
-        var invalid = await store.LoadAsync();
-
-        Assert.AreEqual("123456789012345678", valid.DiscordApplicationId);
-        Assert.AreEqual("touch-logo", valid.DiscordLargeImageKey);
-        Assert.IsNull(invalid.DiscordApplicationId);
+        Assert.AreEqual("123456789012345678", AppSettingsStore.NormalizeDiscordApplicationId(" 123456789012345678 "));
+        Assert.IsNull(AppSettingsStore.NormalizeDiscordApplicationId("not-an-id"));
     }
 
     [TestMethod]

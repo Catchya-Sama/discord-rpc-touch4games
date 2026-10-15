@@ -8,7 +8,7 @@
 - Path detection dan role ID otomatis belum diuji untuk pengguna lain.
 
 ## Fase aktif berikutnya
-Rilis pertama siap untuk review pengguna dari source dan paket portable P5. Publikasi GitHub Release/installer, pilihan lisensi, clean-machine test, interaksi tray manual, dan live reproduction spectator-during-gameplay tetap memerlukan keputusan/hasil pengguna.
+Kandidat tray-only/installer sedang divalidasi. Discord presence telah dikonfirmasi pengguna, termasuk spectator saat gameplay. Install bersih, startup login, popup Enable/Disable, dan deteksi otomatis lintas perangkat tetap memerlukan acceptance pengguna.
 
 ## 15 Oktober 2026 / P0 / main
 Perubahan:
@@ -243,6 +243,39 @@ Risiko atau unknown:
 Push status: dicatat pada laporan fase setelah commit/push.
 
 Langkah berikutnya: review paket portable dan jalankan checklist pengguna P5. Jangan otomatis memulai fitur pascarilis atau menerbitkan GitHub Release.
+
+## 15 Oktober 2026 / P5 usability tray-only dan installer / main
+Perubahan:
+- Dashboard konfigurasi dihapus dari alur pengguna. Aplikasi startup langsung ke notification area; klik kiri menampilkan popup sakelar Enable/Disable dan klik kanan menyediakan Exit.
+- Monitoring otomatis menunggu satu `TouchClient.exe`, memperoleh executable path melalui `MainModule` atau fallback Windows `QueryFullProcessImageName`, menemukan log, mengikuti lifecycle game, dan membersihkan presence saat Disable/game exit/Exit.
+- Public Discord Application ID dan asset key proyek dibundle. Path log, Role ID, role calibration, nickname, Application ID, dan asset key tidak lagi diminta atau dipersist.
+- Settings dimigrasikan menjadi preferensi Enabled/Disabled saja. Ditambahkan single-instance guard.
+- Ditambahkan MSI per-user WiX: install ke LocalAppData, launch setelah install, serta startup saat login melalui HKCU Run. Ditambahkan script build installer dan artifact CI.
+
+Keputusan + alasan:
+- Pengguna meminta pengalaman install-and-use tanpa input manual. Konfigurasi Discord publik aman dibundle; secret/token tetap tidak digunakan.
+- Beberapa client tidak dipilih arbitrer karena berisiko membaca log yang salah.
+- MSI per-user dipilih agar tidak wajib admin dan startup dapat dibersihkan oleh uninstall.
+
+Pemeriksaan dijalankan dan hasil:
+- Release build lulus setelah penggantian UI/runtime.
+- Automated tests: 79 passed, 0 failed, 0 skipped.
+- Formatter verification, diff check, publish portable dan build MSI WiX berhasil.
+- ZIP final berisi tepat executable, README, dan third-party notices. Scan source tidak menemukan identifier pribadi atau secret; vulnerability audit tidak menemukan package vulnerable.
+- Portable smoke: satu proses, tidak ada dashboard/taskbar window, launch kedua tetap satu instance, dan settings instalasi bersih hanya menyimpan `Enabled`.
+- MSI acceptance lokal: install dan uninstall exit 0; EXE terpasang per-user di LocalAppData; startup HKCU dibuat; aplikasi langsung berjalan tanpa dashboard; launch kedua tetap satu instance; uninstall saat aplikasi masih aktif menghentikan proses serta menghapus EXE dan startup registry.
+
+Live verification:
+- User-confirmed: seluruh display Discord yang dicoba berfungsi benar; spectator saat gameplay tampil `Spectating`, bukan `Smashing Key`.
+- Pending: popup tray Enable/Disable baru, install bersih pada perangkat lain, startup login, auto-detection tanpa settings lama, dan uninstall nyata.
+
+Risiko atau unknown:
+- Fallback process path memperluas kompatibilitas tetapi belum membuktikan semua kebijakan keamanan/perangkat Windows.
+- Installer belum ditandatangani dan project source belum memiliki lisensi pilihan pemilik.
+
+Push status: dicatat pada laporan fase setelah commit/push.
+
+Langkah berikutnya: pengguna menguji MSI pada perangkat berbeda. Jangan menerbitkan GitHub Release otomatis.
 
 ## Format update fase
 Tanggal / fase / branch:
