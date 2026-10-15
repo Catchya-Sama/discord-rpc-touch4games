@@ -2,7 +2,7 @@
 Tanggal keputusan: 15 Oktober 2026. Repository ini masih berada pada fase P0
 (bootstrap repository dan dokumentasi); belum ada aplikasi yang dapat dijalankan.
 
-Project Owner: Putty Adelya Sasta.
+Project Owner: Bongbong (xooty).
 Target: Software pendamping Windows, C# .NET, sumber data log local file TOUCH, keluaran Discord Rich Presence.
 
 ## Scope rilis pertama
