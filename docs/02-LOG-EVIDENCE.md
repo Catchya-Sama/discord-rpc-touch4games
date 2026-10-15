@@ -1,7 +1,7 @@
 # Bukti dan batas interpretasi log
 Sumber: pengujian manual pengguna 13–15 Oktober 2026, micro client Windows, Unity 3.5.7f6 menurut header log. Format bukan API resmi/stabil.
 
-| Pola | Bukti / interpretasi | Batas |
+| Role | Bukti / interpretation | Line |
 |---|---|---|
 | `the_current_world Type=WaitRoom` | Room menunggu, observed | Tidak menetapkan role |
 | `Type=RoleCreateRoom` setelah keluar | Lobby pada alur diuji | Jangan samakan semua scene lain dengan lobby |
