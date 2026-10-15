@@ -134,7 +134,8 @@ Corrective review dari live test pengguna:
 - Koreksi: parse current world saja, room detail dapat membuka entry, direct entry ke PlayRoom menginfer Spectator, dan konfirmasi switch dapat mempelajari local role ID untuk session tanpa hard-code.
 - Sanitized structural replay dari log aktual menghasilkan phase Waiting, role Joined inferred, roster complete dan state Waiting; raw log/ID tidak disalin ke repository.
 - Corrective validation: formatter verification, Release build, 56/56 automated tests dan WPF smoke launch melalui host .NET user-local lulus.
-- Live retest setelah build koreksi masih diperlukan untuk mengonfirmasi Waiting/Spectating/Smashing Key pada UI; boundary AFK 30 menit tetap ditunda dan tidak diklaim pass.
+- Live retest setelah build koreksi kemudian dikonfirmasi pengguna: Waiting/Spectating/Smashing Key, role dan roster/count berfungsi baik pada UI.
+- Boundary AFK 30 menit tidak dijalankan secara live karena durasinya; pengguna menerima hasil automated clock tests sebagai dasar acceptance. Ini bukan klaim live pass untuk boundary tersebut.
 
 Risiko atau unknown:
 - Marker live gameplay/results tetap bergantung format log yang tidak merupakan API stabil.
@@ -144,7 +145,7 @@ Risiko atau unknown:
 
 Push status: dicatat pada laporan fase setelah commit/push.
 
-Langkah berikutnya: pengguna menjalankan protokol live P3. P4 Discord tidak dimulai sampai review P3.
+Langkah berikutnya: review P3 diterima dengan pengecualian live boundary AFK yang terdokumentasi; P4 Discord dapat direncanakan sebagai fase terpisah.
 
 ## 15 Oktober 2026 / P3 nickname preparation / main
 Perubahan:
@@ -167,6 +168,12 @@ Pemeriksaan:
 - Replay fixture lama tetap menghasilkan `2 Players Joined` dan `Spectating`; perubahan nickname tidak mengubah payload status P1–P3.
 - WPF smoke launch melalui host .NET user-local lulus dengan kolom nickname baru.
 - Live nickname otomatis belum dapat diverifikasi karena log aktual tidak menyediakan pemetaan nickname↔self role ID yang cukup.
+
+Live acceptance pengguna:
+- User-confirmed: seluruh alur live yang dicoba berfungsi baik, termasuk phase/status, role, roster/count dan nickname manual.
+- Nickname dan character role ID pribadi hanya digunakan pada settings lokal; nilainya tidak dicatat atau di-hard-code di repository.
+- Boundary AFK 30 menit tidak dijalankan live. Acceptance AFK didasarkan pada automated clock tests; status pengujian live boundary tetap `not run`, bukan `pass`.
+- P3 diterima pengguna dengan keterbatasan tersebut. Deteksi nickname otomatis dan hover/pengiriman tooltip Discord tetap pending P4.
 
 ## Format update fase
 Tanggal / fase / branch:

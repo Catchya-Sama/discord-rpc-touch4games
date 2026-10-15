@@ -105,7 +105,7 @@ Clock test deterministik menguji:
 7. Tutup/restart TOUCH atau ganti file session. Expected: timer lama hilang dan session baru dimulai tanpa membawa AFK lama.
 8. Kirim hanya Source Health, Phase, Role, Roster, AFK dan Diagnostic; jangan kirim raw log.
 
-Live P3 tetap pending sampai urutan di atas dikonfirmasi pada TOUCH sebenarnya. Automated tests memakai threshold pendek hanya untuk mempercepat test dan selalu diberi label test.
+Hasil acceptance 15 Oktober 2026: pengguna mengonfirmasi phase/status, role, roster/count dan nickname manual pada alur live yang dicoba berfungsi baik. Boundary AFK 30 menit tidak dijalankan live karena durasinya; acceptance AFK memakai automated clock tests, sementara status boundary live tetap `not run`, bukan `pass`. Automated tests memakai threshold pendek hanya untuk mempercepat test dan selalu diberi label test.
 
 ## Pemeriksaan nickname P3
 Gunakan fixture sintetis; raw log dan nickname pengguna tidak masuk repository. Test mencakup self identity eksplisit, penolakan `ElsePlayerName`, precedence otomatis/manual/fallback, binding manual, pergantian account/session, keluar room, Unicode, batas tooltip dan regresi status/roster/AFK. Log live saat ini hanya membuktikan self role ID, belum nickname otomatis. Pada P4, verifikasi `assets.large_text` dengan hover logo Discord; jangan tandai pass dari preview P3.
