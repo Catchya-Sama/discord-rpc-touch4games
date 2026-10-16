@@ -57,4 +57,5 @@ jobs:
             artifacts/installer/TouchRpc-Setup-win-x64.msi
             artifacts/installer/TouchRpc-Setup-win-x64.msi.sha256
             scripts/Install-TouchRpc.ps1
+            scripts/Uninstall-TouchRpc.ps1
           if-no-files-found: error

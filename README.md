@@ -44,6 +44,16 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-TouchRpc.ps1 `
 
 Mode URL menolak HTTP, memverifikasi SHA-256 sebelum instalasi, dan menghapus unduhan sementara. Ganti contoh URL dan hash dengan nilai release yang benar; repository ini belum menerbitkan GitHub Release otomatis.
 
+### Uninstall melalui PowerShell
+
+Uninstall tidak memerlukan MSI asli atau download ulang:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Uninstall-TouchRpc.ps1
+```
+
+Script menemukan registrasi MSI TOUCH RPC yang cocok, menjalankan uninstall resmi Windows Installer, dan membersihkan aplikasi per-user, startup login, serta shortcut Start Menu. Jika TOUCH RPC sudah tidak terpasang, script selesai tanpa error. Settings `%LocalAppData%\TouchRpc\settings.json` dipertahankan agar pilihan Enabled/Disabled dapat digunakan kembali bila aplikasi dipasang lagi.
+
 ## Penggunaan tray
 
 Klik kiri ikon tray untuk membuka popup sakelar. **Enabled** berarti aplikasi otomatis menunggu dan memonitor TOUCH; **Disabled** menghentikan monitoring dan membersihkan Rich Presence, tetapi aplikasi tetap berjalan di tray. Klik kanan ikon lalu pilih **Exit** untuk menutup aplikasi sepenuhnya. Setelah Exit, buka **Start → TOUCH RPC → TOUCH RPC** untuk menjalankannya kembali tanpa restart Windows. Pilihan Enabled/Disabled diingat untuk startup berikutnya.
@@ -108,7 +118,7 @@ Membuat paket portable dan installer lokal:
 .\scripts\Build-Installer.ps1
 ```
 
-Output portable berada di `artifacts\TouchRpc-win-x64\` dan `artifacts\TouchRpc-win-x64.zip`. Installer dan checksum berada di `artifacts\installer\TouchRpc-Setup-win-x64.msi` dan `.msi.sha256`. Seluruh output diabaikan Git. GitHub Actions menjalankan build/test/publish/installer pada runner Windows dan mengunggah ZIP, MSI, checksum, serta script instalasi PowerShell sebagai workflow artifacts. Script tidak membuat atau menerbitkan GitHub Release.
+Output portable berada di `artifacts\TouchRpc-win-x64\` dan `artifacts\TouchRpc-win-x64.zip`. Installer dan checksum berada di `artifacts\installer\TouchRpc-Setup-win-x64.msi` dan `.msi.sha256`. Seluruh output diabaikan Git. GitHub Actions menjalankan build/test/publish/installer pada runner Windows dan mengunggah ZIP, MSI, checksum, serta script install/uninstall PowerShell sebagai workflow artifacts. Script tidak membuat atau menerbitkan GitHub Release.
 
 ## Status rilis dan lisensi
 

@@ -151,4 +151,5 @@ Live pengguna pada 15 Oktober 2026 mengonfirmasi seluruh display Discord yang di
 8. Jalankan EXE kedua. Expected: single-instance guard menutup instance kedua.
 9. Uji `scripts\Install-TouchRpc.ps1` dengan MSI lokal. Expected: hash ditampilkan, MSI exit code diterima, dan hasil instalasi sama dengan double-click MSI.
 10. Untuk mode download, gunakan URL HTTPS dan hash benar; lalu ulangi dengan hash salah. Expected: hash benar memasang MSI, hash salah berhenti sebelum `msiexec`.
-11. Uninstall. Expected: file program, startup login, shortcut dan folder Start Menu TOUCH RPC dihapus.
+11. Jalankan `scripts\Uninstall-TouchRpc.ps1` ketika aplikasi masih berjalan. Expected: script menemukan ProductCode MSI pengguna saat ini; proses, file program, startup login, shortcut dan folder Start Menu TOUCH RPC dihapus.
+12. Jalankan script uninstall kedua kali. Expected: melaporkan TOUCH RPC tidak terpasang dan exit code tetap 0. Settings pengguna dipertahankan.

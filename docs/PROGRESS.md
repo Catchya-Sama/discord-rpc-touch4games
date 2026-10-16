@@ -313,6 +313,33 @@ CI remote:
 
 Langkah berikutnya: pengguna menguji MSI P5.1 pada perangkat yang sebelumnya mengalami aplikasi hilang. Jangan menerbitkan GitHub Release otomatis.
 
+## 16 Oktober 2026 / P5.2 uninstall PowerShell / main
+Perubahan:
+- Menambahkan `Uninstall-TouchRpc.ps1` untuk menemukan registrasi MSI TOUCH RPC dan menjalankan uninstall berdasarkan ProductCode tanpa memerlukan file MSI asli.
+- Script uninstall bersifat idempotent: bila aplikasi sudah tidak terpasang, script melaporkan kondisi tersebut dan selesai tanpa error.
+- CI artifact dan README diperbarui agar script install dan uninstall didistribusikan bersama MSI serta checksum.
+
+Keputusan + alasan:
+- Registry uninstall standar digunakan alih-alih `Win32_Product`; pendekatan ini tidak memicu consistency check atau repair terhadap produk MSI lain. Acceptance lokal menunjukkan WiX mendaftarkan entry ARP produk per-user ini pada view HKLM 64-bit, meskipun file dan startup tetap berada pada profile pengguna.
+- Settings Enabled/Disabled dipertahankan saat uninstall, konsisten dengan perilaku MSI yang sudah ada dan tidak menghapus data pengguna secara diam-diam.
+
+Pemeriksaan dijalankan dan hasil:
+- Syntax PowerShell lulus. Kondisi belum terpasang selesai dengan exit 0.
+- Acceptance lokal install → uninstall saat aplikasi berjalan lulus: script menemukan ProductCode MSI dan `msiexec` selesai sukses; proses berhenti; EXE, startup, shortcut dan registrasi uninstall terhapus; settings tetap ada.
+- Pemanggilan uninstall kedua melaporkan aplikasi tidak terpasang dan selesai tanpa error.
+- Formatter verification, Release build, 79/79 automated tests, dan syntax seluruh script packaging lulus.
+- Final diff check dan scan data sensitif lulus. Commit dan push dicatat pada laporan fase.
+
+Live verification:
+- Pending: pengguna mencoba command uninstall PowerShell pada perangkat target.
+
+Risiko atau unknown:
+- Script ditujukan untuk MSI per-user TOUCH RPC saat ini; instalasi manual portable memang tidak memiliki registrasi MSI untuk di-uninstall.
+
+Push status: dicatat pada laporan fase setelah commit/push.
+
+Langkah berikutnya: pengguna menguji command install dan uninstall PowerShell sebagai satu pasangan. Jangan menerbitkan GitHub Release otomatis.
+
 ## Format update fase
 Tanggal / fase / branch:
 Perubahan:
