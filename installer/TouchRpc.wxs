@@ -1,7 +1,7 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Package Name="TOUCH RPC"
            Manufacturer="TOUCH RPC"
-           Version="1.0.0.0"
+           Version="1.0.1.0"
            UpgradeCode="D85AC615-08E5-4A52-AD0A-9A240477C65F"
            Scope="perUser"
            Compressed="yes">
@@ -23,8 +23,28 @@
       </Directory>
     </StandardDirectory>
 
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="TouchRpcProgramMenuFolder" Name="TOUCH RPC">
+        <Component Id="StartMenuShortcut" Guid="*">
+          <Shortcut Id="TouchRpcStartMenuShortcut"
+                    Name="TOUCH RPC"
+                    Description="Start TOUCH RPC in the notification area"
+                    Target="[INSTALLFOLDER]TouchRpc.App.exe"
+                    WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder Id="RemoveTouchRpcProgramMenuFolder" On="uninstall" />
+          <RegistryValue Root="HKCU"
+                         Key="Software\TOUCH RPC"
+                         Name="StartMenuShortcut"
+                         Type="integer"
+                         Value="1"
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
     <Feature Id="Main" Title="TOUCH RPC" Level="1">
       <ComponentRef Id="ApplicationFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
     </Feature>
 
     <CustomAction Id="LaunchTouchRpc"

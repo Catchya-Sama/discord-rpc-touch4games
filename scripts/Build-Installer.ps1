@@ -9,6 +9,7 @@ $publishScript = Join-Path $PSScriptRoot "Publish-Release.ps1"
 $publishDirectory = Join-Path $root "artifacts\TouchRpc-$Runtime"
 $installerDirectory = Join-Path $root "artifacts\installer"
 $installerPath = Join-Path $installerDirectory "TouchRpc-Setup-$Runtime.msi"
+$checksumPath = "$installerPath.sha256"
 $wixSource = Join-Path $root "installer\TouchRpc.wxs"
 
 & $publishScript -Runtime $Runtime -Configuration $Configuration
@@ -30,4 +31,9 @@ New-Item $installerDirectory -ItemType Directory -Force | Out-Null
     -out $installerPath
 if ($LASTEXITCODE -ne 0) { throw "WiX build failed with exit code $LASTEXITCODE." }
 
+$hash = (Get-FileHash $installerPath -Algorithm SHA256).Hash
+"$hash  $(Split-Path $installerPath -Leaf)" | Set-Content $checksumPath -Encoding ascii
+
 Write-Output "Installer: $installerPath"
+Write-Output "SHA-256: $hash"
+Write-Output "Checksum: $checksumPath"

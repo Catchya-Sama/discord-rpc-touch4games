@@ -10,6 +10,7 @@ internal sealed class TrayRuntime : IAsyncDisposable
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
     private readonly AppSettingsStore _settingsStore = new();
     private readonly TouchProcessDetector _processDetector = new();
+    private readonly SemaphoreSlim _lifecycleGate = new(1, 1);
     private DiscordPresenceService? _discord;
     private MonitoringSession? _session;
     private CancellationTokenSource? _cancellation;
@@ -23,21 +24,38 @@ internal sealed class TrayRuntime : IAsyncDisposable
 
     public async Task InitializeAsync()
     {
-        var settings = await _settingsStore.LoadAsync();
-        IsEnabled = settings.Enabled;
-        await _settingsStore.SaveAsync(new AppSettings(Enabled: IsEnabled));
-        if (IsEnabled) StartWorker();
-        else SetStatus("Disabled");
+        await _lifecycleGate.WaitAsync();
+        try
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var settings = await _settingsStore.LoadAsync();
+            IsEnabled = settings.Enabled;
+            await _settingsStore.SaveAsync(new AppSettings(Enabled: IsEnabled));
+            if (IsEnabled) StartWorker();
+            else SetStatus("Disabled");
+        }
+        finally
+        {
+            _lifecycleGate.Release();
+        }
     }
 
     public async Task SetEnabledAsync(bool enabled)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        if (IsEnabled == enabled) return;
-        IsEnabled = enabled;
-        await _settingsStore.SaveAsync(new AppSettings(Enabled: enabled));
-        if (enabled) StartWorker();
-        else await StopWorkerAsync("Disabled");
+        await _lifecycleGate.WaitAsync();
+        try
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (IsEnabled == enabled) return;
+            await _settingsStore.SaveAsync(new AppSettings(Enabled: enabled));
+            IsEnabled = enabled;
+            if (enabled) StartWorker();
+            else await StopWorkerAsync("Disabled");
+        }
+        finally
+        {
+            _lifecycleGate.Release();
+        }
     }
 
     private void StartWorker()
@@ -46,8 +64,31 @@ internal sealed class TrayRuntime : IAsyncDisposable
         _discord = new DiscordPresenceService(ProductConfiguration.DiscordApplicationId);
         _discord.StatusChanged += Discord_StatusChanged;
         _cancellation = new CancellationTokenSource();
-        _worker = RunAsync(_cancellation.Token);
+        _worker = RunWorkerAsync(_cancellation.Token);
         SetStatus("Waiting for TOUCH");
+    }
+
+    private async Task RunWorkerAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await RunAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception)
+            {
+                _discord?.Clear();
+                _session = null;
+                _processId = null;
+                SetStatus("Recovering");
+                await Task.Delay(DiscoveryInterval, cancellationToken);
+            }
+        }
     }
 
     private async Task RunAsync(CancellationToken cancellationToken)
@@ -165,8 +206,16 @@ internal sealed class TrayRuntime : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        if (_disposed) return;
-        _disposed = true;
-        await StopWorkerAsync("Stopped");
+        await _lifecycleGate.WaitAsync();
+        try
+        {
+            if (_disposed) return;
+            _disposed = true;
+            await StopWorkerAsync("Stopped");
+        }
+        finally
+        {
+            _lifecycleGate.Release();
+        }
     }
 }

@@ -9,8 +9,10 @@ public partial class MainWindow : Window
 {
     private readonly TrayRuntime _runtime = new();
     private readonly Forms.NotifyIcon _trayIcon;
+    private readonly SemaphoreSlim _uiOperationGate = new(1, 1);
     private bool _initialized;
     private bool _exiting;
+    private bool _synchronizingSwitch;
 
     public MainWindow()
     {
@@ -32,10 +34,22 @@ public partial class MainWindow : Window
     private async Task InitializeAsync()
     {
         if (_initialized) return;
-        _initialized = true;
-        await _runtime.InitializeAsync();
-        EnabledSwitch.IsChecked = _runtime.IsEnabled;
-        Hide();
+        EnabledSwitch.IsEnabled = false;
+        try
+        {
+            await _runtime.InitializeAsync();
+            SynchronizeSwitch();
+            _initialized = true;
+        }
+        catch (Exception)
+        {
+            SetTrayStatus("Initialization failed");
+        }
+        finally
+        {
+            EnabledSwitch.IsEnabled = true;
+            Hide();
+        }
     }
 
     private void TrayIcon_MouseClick(object? sender, Forms.MouseEventArgs e)
@@ -59,8 +73,23 @@ public partial class MainWindow : Window
 
     private async void EnabledSwitch_Changed(object sender, RoutedEventArgs e)
     {
-        if (!_initialized) return;
-        await _runtime.SetEnabledAsync(EnabledSwitch.IsChecked == true);
+        if (!_initialized || _synchronizingSwitch || _exiting) return;
+        await _uiOperationGate.WaitAsync();
+        EnabledSwitch.IsEnabled = false;
+        try
+        {
+            await _runtime.SetEnabledAsync(EnabledSwitch.IsChecked == true);
+        }
+        catch (Exception)
+        {
+            SynchronizeSwitch();
+            SetTrayStatus("Toggle failed");
+        }
+        finally
+        {
+            EnabledSwitch.IsEnabled = true;
+            _uiOperationGate.Release();
+        }
     }
 
     private void Window_Deactivated(object sender, EventArgs e) => Hide();
@@ -74,20 +103,41 @@ public partial class MainWindow : Window
 
     private void Runtime_StatusChanged(object? sender, string status)
     {
-        Dispatcher.BeginInvoke(() =>
-        {
-            var tooltip = $"TOUCH RPC · {status}";
-            _trayIcon.Text = tooltip.Length <= 63 ? tooltip : tooltip[..63];
-        });
+        Dispatcher.BeginInvoke(() => SetTrayStatus(status));
     }
 
     private async Task ExitAsync()
     {
         if (_exiting) return;
         _exiting = true;
-        await _runtime.DisposeAsync();
-        _trayIcon.Visible = false;
-        _trayIcon.Dispose();
-        System.Windows.Application.Current.Shutdown();
+        await _uiOperationGate.WaitAsync();
+        try
+        {
+            await _runtime.DisposeAsync();
+        }
+        catch (Exception)
+        {
+            // Exit must remain available even if a runtime dependency fails to dispose cleanly.
+        }
+        finally
+        {
+            _trayIcon.Visible = false;
+            _trayIcon.Dispose();
+            _uiOperationGate.Release();
+            System.Windows.Application.Current.Shutdown();
+        }
+    }
+
+    private void SynchronizeSwitch()
+    {
+        _synchronizingSwitch = true;
+        EnabledSwitch.IsChecked = _runtime.IsEnabled;
+        _synchronizingSwitch = false;
+    }
+
+    private void SetTrayStatus(string status)
+    {
+        var tooltip = $"TOUCH RPC · {status}";
+        _trayIcon.Text = tooltip.Length <= 63 ? tooltip : tooltip[..63];
     }
 }

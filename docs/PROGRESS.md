@@ -277,6 +277,39 @@ Push status: dicatat pada laporan fase setelah commit/push.
 
 Langkah berikutnya: pengguna menguji MSI pada perangkat berbeda. Jangan menerbitkan GitHub Release otomatis.
 
+## 16 Oktober 2026 / P5.1 pemulihan tray dan metode instalasi / main
+Perubahan:
+- Menambahkan shortcut Start Menu per-user agar aplikasi dapat dijalankan kembali setelah pengguna memilih Exit tanpa restart Windows.
+- Menserialkan initialize, Enable/Disable, dan Exit; switch dinonaktifkan selama transisi dan disinkronkan kembali bila operasi gagal.
+- Worker monitoring sekarang memulihkan diri dari exception tak terduga, sementara batas event UI mencegah kegagalan toggle/cleanup menutup aplikasi.
+- Menambahkan `Install-TouchRpc.ps1` untuk instalasi MSI lokal atau download HTTPS dengan verifikasi SHA-256. Build installer menghasilkan checksum dan CI mengunggah MSI, checksum, serta script bersama-sama.
+
+Keputusan + alasan:
+- Exit tetap berarti menutup aplikasi sepenuhnya. Jalur buka ulang disediakan melalui Start Menu, bukan mengubah Exit menjadi Hide.
+- Metode PowerShell tetap memakai MSI yang sama agar startup, upgrade, Installed Apps, dan uninstall tidak bercabang.
+- Auto-detection TOUCH tidak diubah karena pengguna membuktikan deteksi berhasil pada perangkat lain dan instalasi game di drive E:.
+
+Pemeriksaan dijalankan dan hasil:
+- Release build, formatter verification, dan 79/79 automated tests lulus setelah perubahan lifecycle.
+- Syntax parser PowerShell lulus untuk script install dan build installer; HTTP ditolak oleh mode download sesuai kebijakan HTTPS-only.
+- MSI WiX 1.0.1 dan checksum berhasil dibangun. Instalasi PowerShell lokal menampilkan hash, memasang EXE, membuat shortcut Start Menu dan startup HKCU, menjalankan tepat satu proses, serta mempertahankan settings hanya `Enabled`.
+- Smoke relaunch: setelah proses dihentikan, shortcut Start Menu menjalankan kembali satu proses tanpa restart; peluncuran EXE kedua tetap ditolak oleh single-instance guard.
+- Uninstall saat aplikasi berjalan exit 0, menghentikan proses, serta menghapus EXE, startup entry dan shortcut Start Menu.
+- Vulnerability audit tidak menemukan package vulnerable. Final diff/privacy, commit dan push dicatat setelah selesai.
+
+Live verification:
+- User-confirmed pass pada dua perangkat: install, tray-only popup, auto-detection, Discord presence, Disable/Enable, startup login, uninstall, termasuk TOUCH di drive E:.
+- User-confirmed fail pada build sebelumnya: aplikasi tidak memiliki jalur buka ulang setelah Exit; pada satu perangkat aplikasi juga menghilang setelah toggle kedua.
+- Pending: build P5.1 diuji pengguna untuk toggle berulang dan Exit → buka ulang dari Start Menu.
+
+Risiko atau unknown:
+- Installer tetap unsigned. Script hash memverifikasi integritas artifact yang diketahui, tetapi bukan pengganti code signing.
+- URL release stabil belum tersedia dan publikasi GitHub Release belum dilakukan.
+
+Push status: dicatat pada laporan fase setelah commit/push.
+
+Langkah berikutnya: pengguna menguji MSI P5.1 pada perangkat yang sebelumnya mengalami aplikasi hilang. Jangan menerbitkan GitHub Release otomatis.
+
 ## Format update fase
 Tanggal / fase / branch:
 Perubahan:

@@ -145,7 +145,10 @@ Live pengguna pada 15 Oktober 2026 mengonfirmasi seluruh display Discord yang di
 2. Pastikan tidak ada input path/Application ID/asset key/Role ID. Klik kiri ikon; expected hanya popup sakelar Enable/Disable.
 3. Dengan sakelar Enabled, uji TOUCH dibuka sebelum dan sesudah TOUCH RPC. Expected: log ditemukan otomatis dan activity muncul tanpa input pengguna.
 4. Set Disabled. Expected: presence dibersihkan dan tidak kembali saat game berubah. Enable kembali; expected latest state muncul.
-5. Klik kanan → Exit. Expected: proses berhenti dan presence dibersihkan.
-6. Login ulang Windows. Expected: satu instance TOUCH RPC berjalan di tray dan preferensi Enabled/Disabled terakhir dipertahankan.
-7. Jalankan EXE kedua. Expected: single-instance guard menutup instance kedua.
-8. Uninstall. Expected: file program dan startup login TOUCH RPC dihapus.
+5. Toggle Disabled/Enabled berulang setidaknya 10 kali, termasuk klik cepat. Expected: switch sementara tidak interaktif selama transisi, proses tetap hidup, dan keadaan terakhir sesuai pilihan terakhir yang diterima.
+6. Klik kanan → Exit. Expected: proses berhenti dan presence dibersihkan. Buka **Start → TOUCH RPC → TOUCH RPC**; expected aplikasi kembali di tray tanpa restart Windows.
+7. Login ulang Windows. Expected: satu instance TOUCH RPC berjalan di tray dan preferensi Enabled/Disabled terakhir dipertahankan.
+8. Jalankan EXE kedua. Expected: single-instance guard menutup instance kedua.
+9. Uji `scripts\Install-TouchRpc.ps1` dengan MSI lokal. Expected: hash ditampilkan, MSI exit code diterima, dan hasil instalasi sama dengan double-click MSI.
+10. Untuk mode download, gunakan URL HTTPS dan hash benar; lalu ulangi dengan hash salah. Expected: hash benar memasang MSI, hash salah berhenti sebelum `msiexec`.
+11. Uninstall. Expected: file program, startup login, shortcut dan folder Start Menu TOUCH RPC dihapus.

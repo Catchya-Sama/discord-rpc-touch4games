@@ -16,14 +16,37 @@ Project owner: repository maintainer.
 
 Mode permainan, musik, difficulty, nomor room, kapasitas slot, overlay, akun online, dan backend berada di luar scope.
 
-## Instalasi
+## Instalasi melalui file
 
 1. Jalankan `TouchRpc-Setup-win-x64.msi`.
 2. Installer memasang aplikasi untuk pengguna Windows saat ini, menjalankannya di notification area, dan mengaktifkan startup saat login Windows.
 3. Tidak ada path log, Application ID, asset key, Role ID, nickname, atau role calibration yang perlu diisi.
 4. Jalankan TOUCH dan Discord desktop seperti biasa. TOUCH RPC otomatis menunggu `TouchClient.exe`, menemukan `TouchClient_Data\output_log.txt`, dan mengirim state terbaru.
 
-Klik kiri ikon tray untuk membuka popup sakelar. **Enabled** berarti aplikasi otomatis menunggu dan memonitor TOUCH; **Disabled** menghentikan monitoring dan membersihkan Rich Presence. Klik kanan ikon lalu pilih **Exit** untuk menutup aplikasi sepenuhnya. Pilihan Enabled/Disabled diingat untuk startup berikutnya.
+## Instalasi melalui PowerShell
+
+Script `scripts\Install-TouchRpc.ps1` memasang MSI yang sama, sehingga lokasi instalasi, startup login, Start Menu, upgrade, dan uninstall tetap identik. Script tidak mengubah execution policy.
+
+Dari clone/repository atau paket yang sudah berisi MSI:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\Install-TouchRpc.ps1 `
+  -InstallerPath .\artifacts\installer\TouchRpc-Setup-win-x64.msi
+```
+
+Dari URL HTTPS setelah artifact diterbitkan, sertakan SHA-256 resmi:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Install-TouchRpc.ps1 `
+  -InstallerUri "https://example.invalid/TouchRpc-Setup-win-x64.msi" `
+  -Sha256 "64_HEX_CHARACTER_SHA256"
+```
+
+Mode URL menolak HTTP, memverifikasi SHA-256 sebelum instalasi, dan menghapus unduhan sementara. Ganti contoh URL dan hash dengan nilai release yang benar; repository ini belum menerbitkan GitHub Release otomatis.
+
+## Penggunaan tray
+
+Klik kiri ikon tray untuk membuka popup sakelar. **Enabled** berarti aplikasi otomatis menunggu dan memonitor TOUCH; **Disabled** menghentikan monitoring dan membersihkan Rich Presence, tetapi aplikasi tetap berjalan di tray. Klik kanan ikon lalu pilih **Exit** untuk menutup aplikasi sepenuhnya. Setelah Exit, buka **Start → TOUCH RPC → TOUCH RPC** untuk menjalankannya kembali tanpa restart Windows. Pilihan Enabled/Disabled diingat untuk startup berikutnya.
 
 Installer bersifat per-user dan tidak memerlukan admin. Program dipasang di `%LocalAppData%\TOUCH RPC`; startup login menggunakan entri pengguna Windows saat ini. Settings hanya menyimpan preferensi Enabled/Disabled di `%LocalAppData%\TouchRpc\settings.json`. Raw log hanya dibaca dengan file sharing yang sesuai dan tidak disalin.
 
@@ -47,6 +70,7 @@ Discord desktop harus berjalan, pengguna harus login, dan activity sharing harus
 - **Lebih dari satu TOUCH client:** tutup instance tambahan; aplikasi tidak memilih log secara arbitrer.
 - **Role/roster Unknown:** tunggu rangkaian room lengkap; aplikasi tidak mengarang count atau role.
 - **Aplikasi tidak keluar saat popup ditutup:** popup memang hanya disembunyikan; klik kanan ikon tray lalu pilih **Exit**.
+- **Aplikasi sudah di-Exit:** buka kembali melalui **Start → TOUCH RPC → TOUCH RPC**. Menjalankan MSI lagi bukan cara membuka aplikasi yang sudah terpasang.
 
 Kasus spectator saat gameplay harus tetap `Spectating`. Jika terlihat `Smashing Key`, catat hanya Phase, Role, Roster, State, dan Diagnostic—jangan kirim raw log atau settings privat.
 
@@ -84,7 +108,7 @@ Membuat paket portable dan installer lokal:
 .\scripts\Build-Installer.ps1
 ```
 
-Output portable berada di `artifacts\TouchRpc-win-x64\` dan `artifacts\TouchRpc-win-x64.zip`. Installer berada di `artifacts\installer\TouchRpc-Setup-win-x64.msi`. Seluruh output diabaikan Git. GitHub Actions menjalankan build/test/publish/installer pada runner Windows dan mengunggah ZIP serta MSI sebagai workflow artifacts. Script tidak membuat atau menerbitkan GitHub Release.
+Output portable berada di `artifacts\TouchRpc-win-x64\` dan `artifacts\TouchRpc-win-x64.zip`. Installer dan checksum berada di `artifacts\installer\TouchRpc-Setup-win-x64.msi` dan `.msi.sha256`. Seluruh output diabaikan Git. GitHub Actions menjalankan build/test/publish/installer pada runner Windows dan mengunggah ZIP, MSI, checksum, serta script instalasi PowerShell sebagai workflow artifacts. Script tidak membuat atau menerbitkan GitHub Release.
 
 ## Status rilis dan lisensi
 
