@@ -308,6 +308,9 @@ Risiko atau unknown:
 
 Push status: dicatat pada laporan fase setelah commit/push.
 
+CI remote:
+- GitHub Actions run untuk commit implementasi `fe715d4` gagal sebelum job build dimulai. Annotation GitHub menyatakan akun terkunci karena masalah billing; tidak ada hasil build/test/artifact CI dari run tersebut. Validasi lokal tetap menjadi bukti teknis fase ini sampai masalah akun GitHub diselesaikan dan workflow dijalankan ulang.
+
 Langkah berikutnya: pengguna menguji MSI P5.1 pada perangkat yang sebelumnya mengalami aplikasi hilang. Jangan menerbitkan GitHub Release otomatis.
 
 ## Format update fase
