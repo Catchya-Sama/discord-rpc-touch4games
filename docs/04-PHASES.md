@@ -1,4 +1,4 @@
-# Roadmap — satu fase per siklus Cline
+# Roadmap — Phase tiap masing masing progress nya
 
 ## P0 — bootstrap dokumentasi dan repository
 Periksa folder/AGENTS/SDK/git. Rapikan repo, .gitignore, README dan progress. Belum coding fitur. Jangan tentukan lisensi legal tanpa pilihan pemilik: open-source intent ada tetapi jenis lisensi belum dipilih. Repo remote hanya dari URL pengguna atau remote existing yang diverifikasi.
